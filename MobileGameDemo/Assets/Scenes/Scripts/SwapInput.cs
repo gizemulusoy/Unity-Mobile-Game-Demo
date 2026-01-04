@@ -8,6 +8,7 @@ public class SwapInput : MonoBehaviour
 
     void Update()
     {
+        
         if (Input.GetMouseButtonDown(0))
             Debug.Log("CLICK!");
 

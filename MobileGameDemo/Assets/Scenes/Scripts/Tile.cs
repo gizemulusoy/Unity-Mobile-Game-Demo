@@ -13,6 +13,9 @@ public class Tile : MonoBehaviour
     public TileColor ColorType { get; private set; }
 
     private SpriteRenderer sr;
+    private SpriteRenderer outlineSr;
+
+    public bool IsEmpty { get; private set; }
 
     public void Init(Vector2Int gridPos, TileColor colorType, Sprite sprite, float size)
     {
@@ -22,9 +25,22 @@ public class Tile : MonoBehaviour
         sr = GetComponent<SpriteRenderer>();
         sr.sprite = sprite;
         sr.color = ToUnityColor(colorType);
-        
+
         transform.localScale = Vector3.one * size;
         name = $"Tile_{gridPos.x}_{gridPos.y}_{colorType}";
+
+        
+        var outlineGO = new GameObject("Outline");
+        outlineGO.transform.SetParent(transform);
+        outlineGO.transform.localPosition = Vector3.zero;
+        outlineGO.transform.localScale = Vector3.one * 1.12f;
+
+        outlineSr = outlineGO.AddComponent<SpriteRenderer>();
+        outlineSr.sprite = sprite;
+        outlineSr.color = Color.white;
+        outlineSr.sortingOrder = sr.sortingOrder - 1;
+        outlineSr.enabled = false;
+        
     }
 
     public void SetGridPos(Vector2Int newPos)
@@ -52,17 +68,26 @@ public class Tile : MonoBehaviour
             _ => Color.white
         };
     }
-    
-    public IEnumerator FlashWhite(float duration = 0.08f)
+
+    // Outline
+    public IEnumerator FlashWhite(float duration = 0.8f)
     {
-        if (sr == null) sr = GetComponent<SpriteRenderer>();
+        if (outlineSr == null) yield break;
 
-        Color original = sr.color;
-        sr.color = Color.white;
-
+        outlineSr.enabled = true;
         yield return new WaitForSeconds(duration);
-
-        sr.color = original;
+        outlineSr.enabled = false;
     }
+    // 
 
+    public void SetEmpty(bool empty)
+    {
+        IsEmpty = empty;
+
+        if (sr != null)
+            sr.enabled = !empty;
+
+        if (outlineSr != null)
+            outlineSr.enabled = false;
+    }
 }
