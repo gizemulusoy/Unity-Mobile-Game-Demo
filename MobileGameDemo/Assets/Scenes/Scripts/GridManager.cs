@@ -30,6 +30,21 @@ public class GridManager : MonoBehaviour
     private Tile[,] grid;
     private Sprite whiteSprite;
 
+    private Tile lastSwapA;
+    private Tile lastSwapB;
+
+    private struct MatchLine
+    {
+        public List<Tile> tiles;
+        public bool horizontal;
+
+        public MatchLine(List<Tile> tiles, bool horizontal)
+        {
+            this.tiles = tiles;
+            this.horizontal = horizontal;
+        }
+    }
+
     private void Awake()
     {
         grid = new Tile[width, height];
@@ -108,14 +123,34 @@ public class GridManager : MonoBehaviour
         if (a == null || b == null) yield break;
         if (moves <= 0) yield break;
 
+        lastSwapA = a;
+        lastSwapB = b;
+
         // Swap Animation
         yield return StartCoroutine(SwapTilesAnimated(a, b, swapDuration));
 
-        var matches = (matchFinder != null)
-            ? matchFinder.FindAllMatches(grid, width, height)
-            : new HashSet<Tile>();
+        if ((a.Kind == TileKind.ColorBomb && !b.IsEmpty) || (b.Kind == TileKind.ColorBomb && !a.IsEmpty))
+        {
+            moves--;
+            if (movesUI != null) movesUI.SetMoves(moves);
 
-        if (matches.Count > 0)
+            if (a.Kind == TileKind.ColorBomb && b.Kind == TileKind.ColorBomb)
+            {
+                yield return StartCoroutine(ResolveColorBombSwap(null));
+            }
+            else
+            {
+                TileColor target = (a.Kind == TileKind.ColorBomb) ? b.ColorType : a.ColorType;
+                yield return StartCoroutine(ResolveColorBombSwap(target));
+            }
+
+            lastSwapA = null;
+            lastSwapB = null;
+            yield break;
+        }
+
+        var lines = FindMatchLines();
+        if (lines.Count > 0)
         {
             moves--;
             if (movesUI != null) movesUI.SetMoves(moves);
@@ -126,6 +161,9 @@ public class GridManager : MonoBehaviour
 
         
         yield return StartCoroutine(SwapTilesAnimated(a, b, swapDuration));
+
+        lastSwapA = null;
+        lastSwapB = null;
     }
     
     // Cascade Loop
@@ -137,21 +175,146 @@ public class GridManager : MonoBehaviour
 
         for (int i = 0; i < maxCascades; i++)
         {
-            var matches = matchFinder.FindAllMatches(grid, width, height);
-            if (matches.Count == 0) break;
-            
-            foreach (var t in matches)
+            var lines = FindMatchLines();
+            if (lines.Count == 0) break;
+
+            HashSet<Tile> matched = new HashSet<Tile>();
+            foreach (var line in lines)
+            {
+                for (int k = 0; k < line.tiles.Count; k++)
+                    matched.Add(line.tiles[k]);
+            }
+
+            HashSet<Tile> toClear = new HashSet<Tile>(matched);
+
+            foreach (var t in matched)
+            {
+                if (t.Kind == TileKind.RocketRow)
+                {
+                    int y = t.GridPos.y;
+                    for (int x = 0; x < width; x++)
+                    {
+                        if (!grid[x, y].IsEmpty)
+                            toClear.Add(grid[x, y]);
+                    }
+                }
+                else if (t.Kind == TileKind.RocketCol)
+                {
+                    int x = t.GridPos.x;
+                    for (int y = 0; y < height; y++)
+                    {
+                        if (!grid[x, y].IsEmpty)
+                            toClear.Add(grid[x, y]);
+                    }
+                }
+            }
+
+            Tile specialTile = null;
+            TileKind specialKind = TileKind.Normal;
+
+            for (int li = 0; li < lines.Count; li++)
+            {
+                var line = lines[li];
+                if (line.tiles.Count >= 5)
+                {
+                    specialKind = TileKind.ColorBomb;
+
+                    if (lastSwapA != null && line.tiles.Contains(lastSwapA)) specialTile = lastSwapA;
+                    else if (lastSwapB != null && line.tiles.Contains(lastSwapB)) specialTile = lastSwapB;
+                    else specialTile = line.tiles[line.tiles.Count / 2];
+
+                    break;
+                }
+            }
+
+            if (specialTile == null)
+            {
+                for (int li = 0; li < lines.Count; li++)
+                {
+                    var line = lines[li];
+                    if (line.tiles.Count >= 4)
+                    {
+                        specialKind = line.horizontal ? TileKind.RocketRow : TileKind.RocketCol;
+
+                        if (lastSwapA != null && line.tiles.Contains(lastSwapA)) specialTile = lastSwapA;
+                        else if (lastSwapB != null && line.tiles.Contains(lastSwapB)) specialTile = lastSwapB;
+                        else specialTile = line.tiles[line.tiles.Count / 2];
+
+                        break;
+                    }
+                }
+            }
+
+            if (specialTile != null && !specialTile.IsEmpty)
+            {
+                specialTile.SetKind(specialKind);
+                toClear.Remove(specialTile);
+            }
+
+            foreach (var t in toClear)
                 StartCoroutine(t.FlashWhite(flashDuration));
 
             yield return new WaitForSeconds(flashDuration + afterFlashDelay);
             
-            foreach (var t in matches)
+            foreach (var t in toClear)
                 t.SetEmpty(true);
             
             yield return StartCoroutine(ApplyGravityAnimated());
             
             yield return StartCoroutine(RefillEmptyTilesAnimated());
+
+            lastSwapA = null;
+            lastSwapB = null;
         }
+    }
+    
+    // check again ResolveColorBombSwap !!! 
+    private IEnumerator ResolveColorBombSwap(TileColor? targetColor)
+    {
+        HashSet<Tile> toClear = new HashSet<Tile>();
+
+        if (targetColor.HasValue)
+        {
+            TileColor c = targetColor.Value;
+            for (int x = 0; x < width; x++)
+            for (int y = 0; y < height; y++)
+            {
+                Tile t = grid[x, y];
+                if (!t.IsEmpty && t.Kind != TileKind.ColorBomb && t.ColorType == c)
+                    toClear.Add(t);
+            }
+        }
+        else
+        {
+            for (int x = 0; x < width; x++)
+            for (int y = 0; y < height; y++)
+            {
+                Tile t = grid[x, y];
+                if (!t.IsEmpty && t.Kind != TileKind.ColorBomb)
+                    toClear.Add(t);
+            }
+        }
+
+        for (int x = 0; x < width; x++)
+        for (int y = 0; y < height; y++)
+        {
+            Tile t = grid[x, y];
+            if (!t.IsEmpty && t.Kind == TileKind.ColorBomb)
+                toClear.Add(t);
+        }
+
+        foreach (var t in toClear)
+            StartCoroutine(t.FlashWhite(flashDuration));
+
+        yield return new WaitForSeconds(flashDuration + afterFlashDelay);
+
+        foreach (var t in toClear)
+            t.SetEmpty(true);
+
+        yield return StartCoroutine(ApplyGravityAnimated());
+        yield return StartCoroutine(RefillEmptyTilesAnimated());
+
+        yield return StartCoroutine(RemoveMatchesAndRefill());
     }
     
     // Swap (animated)
@@ -269,6 +432,7 @@ public class GridManager : MonoBehaviour
                     t.transform.position = spawnPos;
 
                     t.SetColor(RandomColor());
+                    t.SetKind(TileKind.Normal);
                     t.SetEmpty(false);
 
                     Vector3 target = GridToWorld(x, y);
@@ -291,9 +455,77 @@ public class GridManager : MonoBehaviour
             foreach (var t in matches)
             {
                 t.SetColor(RandomColor());
+                t.SetKind(TileKind.Normal);
                 t.SetEmpty(false);
             }
         }
+    }
+
+    private List<MatchLine> FindMatchLines()
+    {
+        var lines = new List<MatchLine>();
+
+        for (int y = 0; y < height; y++)
+        {
+            int run = 1;
+            for (int x = 1; x < width; x++)
+            {
+                Tile prev = grid[x - 1, y];
+                Tile cur = grid[x, y];
+
+                bool same = !prev.IsEmpty && !cur.IsEmpty && prev.ColorType == cur.ColorType;
+                if (same) run++;
+                else
+                {
+                    if (run >= 3)
+                    {
+                        var tiles = new List<Tile>();
+                        for (int k = x - run; k < x; k++) tiles.Add(grid[k, y]);
+                        lines.Add(new MatchLine(tiles, true));
+                    }
+                    run = 1;
+                }
+            }
+
+            if (run >= 3)
+            {
+                var tiles = new List<Tile>();
+                for (int k = width - run; k < width; k++) tiles.Add(grid[k, y]);
+                lines.Add(new MatchLine(tiles, true));
+            }
+        }
+
+        for (int x = 0; x < width; x++)
+        {
+            int run = 1;
+            for (int y = 1; y < height; y++)
+            {
+                Tile prev = grid[x, y - 1];
+                Tile cur = grid[x, y];
+
+                bool same = !prev.IsEmpty && !cur.IsEmpty && prev.ColorType == cur.ColorType;
+                if (same) run++;
+                else
+                {
+                    if (run >= 3)
+                    {
+                        var tiles = new List<Tile>();
+                        for (int k = y - run; k < y; k++) tiles.Add(grid[x, k]);
+                        lines.Add(new MatchLine(tiles, false));
+                    }
+                    run = 1;
+                }
+            }
+
+            if (run >= 3)
+            {
+                var tiles = new List<Tile>();
+                for (int k = height - run; k < height; k++) tiles.Add(grid[x, k]);
+                lines.Add(new MatchLine(tiles, false));
+            }
+        }
+
+        return lines;
     }
 
     private TileColor RandomColor()
