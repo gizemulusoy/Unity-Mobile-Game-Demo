@@ -375,27 +375,53 @@ public class GridManager : MonoBehaviour
     // Gravity 
     private IEnumerator ApplyGravityAnimated()
     {
+        bool anyMove = false;
+
         for (int x = 0; x < width; x++)
         {
-            int emptyY = -1;
+            List<Tile> nonEmpty = new List<Tile>(height);
+            List<Tile> empty = new List<Tile>(height);
 
             for (int y = 0; y < height; y++)
             {
-                if (grid[x, y].IsEmpty)
+                Tile t = grid[x, y];
+                if (t.IsEmpty) empty.Add(t);
+                else nonEmpty.Add(t);
+            }
+
+            List<Tile> newCol = new List<Tile>(height);
+            newCol.AddRange(nonEmpty);
+            newCol.AddRange(empty);
+
+            for (int y = 0; y < height; y++)
+            {
+                Tile t = newCol[y];
+                grid[x, y] = t;
+
+                Vector2Int newPos = new Vector2Int(x, y);
+                t.SetGridPos(newPos);
+
+                Vector3 target = GridToWorld(x, y);
+
+                if (t.IsEmpty)
                 {
-                    if (emptyY == -1) emptyY = y;
+                    t.transform.position = target;
                 }
                 else
                 {
-                    if (emptyY != -1)
+                    if (t.transform.position != target)
                     {
-                        yield return StartCoroutine(MoveTileDownAnimated(x, y, x, emptyY, fallDuration));
-                        emptyY++;
+                        anyMove = true;
+                        StartCoroutine(MoveTo(t, target, fallDuration));
                     }
                 }
             }
         }
+
+        if (anyMove)
+            yield return new WaitForSeconds(fallDuration);
     }
+
 
     private IEnumerator MoveTileDownAnimated(int fromX, int fromY, int toX, int toY, float duration)
     {
