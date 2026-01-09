@@ -5,6 +5,7 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="4a465f50-e89e-4cca-979f-76479a6c66b9" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/.idea.MobileGameDemo/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.MobileGameDemo/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Assets/Scenes/Scripts/GridManager.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Scenes/Scripts/GridManager.cs" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -96,6 +97,8 @@
       <workItem from="1767543211997" duration="5601000" />
       <workItem from="1767609868660" duration="6361000" />
       <workItem from="1767798531162" duration="3028000" />
+      <workItem from="1767959974840" duration="630000" />
+      <workItem from="1767960633077" duration="3888000" />
     </task>
     <servers />
   </component>
@@ -110,6 +113,17 @@
     <option name="unityProjectFolder" value="true" />
   </component>
   <component name="UnityUnitTestConfiguration" currentTestLauncher="Both" />
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State />
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
   <component name="VcsManagerConfiguration">
     <option name="CLEAR_INITIAL_COMMIT_MESSAGE" value="true" />
   </component>

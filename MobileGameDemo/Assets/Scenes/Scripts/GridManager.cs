@@ -37,13 +37,16 @@ public class GridManager : MonoBehaviour
     {
         public List<Tile> tiles;
         public bool horizontal;
+        public bool isSquare;  //2x2
 
-        public MatchLine(List<Tile> tiles, bool horizontal)
+        public MatchLine(List<Tile> tiles, bool horizontal, bool isSquare = false)
         {
             this.tiles = tiles;
             this.horizontal = horizontal;
+            this.isSquare = isSquare;  //2x2
         }
     }
+
 
     private void Awake()
     {
@@ -215,6 +218,9 @@ public class GridManager : MonoBehaviour
             for (int li = 0; li < lines.Count; li++)
             {
                 var line = lines[li];
+
+                if (line.isSquare) continue; // 2x2 
+
                 if (line.tiles.Count >= 5)
                 {
                     specialKind = TileKind.ColorBomb;
@@ -227,11 +233,15 @@ public class GridManager : MonoBehaviour
                 }
             }
 
+
             if (specialTile == null)
             {
                 for (int li = 0; li < lines.Count; li++)
                 {
                     var line = lines[li];
+
+                    if (line.isSquare) continue; // 2x2 
+
                     if (line.tiles.Count >= 4)
                     {
                         specialKind = line.horizontal ? TileKind.RocketRow : TileKind.RocketCol;
@@ -240,10 +250,11 @@ public class GridManager : MonoBehaviour
                         else if (lastSwapB != null && line.tiles.Contains(lastSwapB)) specialTile = lastSwapB;
                         else specialTile = line.tiles[line.tiles.Count / 2];
 
-                        break;
+                        break; 
                     }
                 }
             }
+
 
             if (specialTile != null && !specialTile.IsEmpty)
             {
@@ -486,6 +497,14 @@ public class GridManager : MonoBehaviour
             }
         }
     }
+    
+    private bool IsSameColor(Tile a, Tile b)  //2x2
+    {
+        if (a == null || b == null) return false;
+        if (a.IsEmpty || b.IsEmpty) return false;
+        return a.ColorType == b.ColorType;
+    }
+
 
     private List<MatchLine> FindMatchLines()
     {
@@ -550,9 +569,36 @@ public class GridManager : MonoBehaviour
                 lines.Add(new MatchLine(tiles, false));
             }
         }
+        
+        lines.AddRange(FindSquareLines()); // 2x2
+        
 
         return lines;
     }
+    
+    private List<MatchLine> FindSquareLines() // 2x2
+    {
+        var squares = new List<MatchLine>();
+
+        for (int x = 0; x < width - 1; x++)
+        {
+            for (int y = 0; y < height - 1; y++)
+            {
+                Tile a = grid[x, y];
+                Tile b = grid[x + 1, y];
+                Tile c = grid[x, y + 1];
+                Tile d = grid[x + 1, y + 1];
+
+                if (IsSameColor(a, b) && IsSameColor(a, c) && IsSameColor(a, d))
+                {
+                    squares.Add(new MatchLine(new List<Tile> { a, b, c, d }, false, true));
+                }
+            }
+        }
+
+        return squares;
+    }
+
 
     private TileColor RandomColor()
     {
