@@ -7,6 +7,7 @@
     <list default="true" id="4a465f50-e89e-4cca-979f-76479a6c66b9" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/.idea.MobileGameDemo/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.MobileGameDemo/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Assets/Scenes/Scripts/GridManager.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Scenes/Scripts/GridManager.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Scenes/Scripts/Tile.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Scenes/Scripts/Tile.cs" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -17,8 +18,11 @@
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$/.." />
   </component>
   <component name="HighlightingSettingsPerFile">
-    <setting file="file://$PROJECT_DIR$/Assets/Scenes/Scripts/LevelBuilder.cs" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Assets/Scenes/Scripts/GridManager.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/Assets/Scenes/Scripts/MatchFinder.cs" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Assets/Scenes/Scripts/MovesUI.cs" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Assets/Scenes/Scripts/SwapInput.cs" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Assets/Scenes/Scripts/Tile.cs" root0="FORCE_HIGHLIGHTING" />
   </component>
   <component name="MetaFilesCheckinStateConfiguration" checkMetaFiles="true" />
   <component name="ProjectColorInfo">{
@@ -99,6 +103,9 @@
       <workItem from="1767798531162" duration="3028000" />
       <workItem from="1767959974840" duration="630000" />
       <workItem from="1767960633077" duration="3888000" />
+      <workItem from="1768218664699" duration="2404000" />
+      <workItem from="1768242682991" duration="661000" />
+      <workItem from="1768243683939" duration="904000" />
     </task>
     <servers />
   </component>

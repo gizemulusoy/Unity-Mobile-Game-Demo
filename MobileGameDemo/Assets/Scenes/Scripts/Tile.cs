@@ -24,6 +24,8 @@ public class Tile : MonoBehaviour
 
     public TileKind Kind { get; private set; } = TileKind.Normal;
     private SpriteRenderer markerSr;
+    
+    private Sprite baseSprite;
 
     public void Init(Vector2Int gridPos, TileColor colorType, Sprite sprite, float size)
     {
@@ -31,13 +33,15 @@ public class Tile : MonoBehaviour
         ColorType = colorType;
 
         sr = GetComponent<SpriteRenderer>();
-        sr.sprite = sprite;
+
+        baseSprite = sprite;
+        sr.sprite = baseSprite;
         sr.color = ToUnityColor(colorType);
 
         transform.localScale = Vector3.one * size;
         name = $"Tile_{gridPos.x}_{gridPos.y}_{colorType}";
 
-        
+        // Outline
         var outlineGO = new GameObject("Outline");
         outlineGO.transform.SetParent(transform);
         outlineGO.transform.localPosition = Vector3.zero;
@@ -49,6 +53,7 @@ public class Tile : MonoBehaviour
         outlineSr.sortingOrder = sr.sortingOrder - 1;
         outlineSr.enabled = false;
 
+        // Marker (baklava/işaret)
         var markerGO = new GameObject("Marker");
         markerGO.transform.SetParent(transform);
         markerGO.transform.localPosition = Vector3.zero;
@@ -61,7 +66,6 @@ public class Tile : MonoBehaviour
         markerSr.enabled = false;
 
         SetKind(TileKind.Normal);
-        
     }
 
     public void SetGridPos(Vector2Int newPos)
@@ -73,38 +77,65 @@ public class Tile : MonoBehaviour
     {
         ColorType = newColor;
         if (sr == null) sr = GetComponent<SpriteRenderer>();
-        sr.color = ToUnityColor(newColor);
+        
+        if (Kind == TileKind.Normal)
+            sr.color = ToUnityColor(newColor);
     }
 
     public void SetKind(TileKind kind)
     {
         Kind = kind;
 
+        if (sr == null) sr = GetComponent<SpriteRenderer>();
         if (markerSr == null) return;
-
+        
         if (kind == TileKind.Normal)
         {
             markerSr.enabled = false;
             markerSr.transform.localScale = Vector3.one;
             markerSr.transform.localRotation = Quaternion.identity;
+            
+            if (baseSprite != null) sr.sprite = baseSprite;
+            sr.color = ToUnityColor(ColorType);
+
             return;
         }
-
+        
         markerSr.enabled = true;
         markerSr.transform.localRotation = Quaternion.identity;
 
         if (kind == TileKind.RocketRow)
         {
             markerSr.transform.localScale = new Vector3(0.75f, 0.18f, 1f);
+            
+            if (baseSprite != null) sr.sprite = baseSprite;
+            sr.color = ToUnityColor(ColorType);
             return;
         }
 
         if (kind == TileKind.RocketCol)
         {
             markerSr.transform.localScale = new Vector3(0.18f, 0.75f, 1f);
+            
+            if (baseSprite != null) sr.sprite = baseSprite;
+            sr.color = ToUnityColor(ColorType);
             return;
         }
 
+        // ColorBomb
+        if (kind == TileKind.ColorBomb)
+        {
+            markerSr.enabled = true;
+            markerSr.transform.localScale = new Vector3(0.45f, 0.45f, 1f);
+            markerSr.transform.localRotation = Quaternion.Euler(0f, 0f, 45f);
+
+            if (baseSprite != null) sr.sprite = baseSprite;
+            sr.color = new Color(0.08f, 0.08f, 0.08f); // koyu siyah / koyu gri
+
+            return;
+        }
+
+        // Default
         markerSr.transform.localScale = new Vector3(0.45f, 0.45f, 1f);
         markerSr.transform.localRotation = Quaternion.Euler(0f, 0f, 45f);
     }
@@ -132,7 +163,7 @@ public class Tile : MonoBehaviour
         yield return new WaitForSeconds(duration);
         outlineSr.enabled = false;
     }
-    
+
     public void SetEmpty(bool empty)
     {
         IsEmpty = empty;

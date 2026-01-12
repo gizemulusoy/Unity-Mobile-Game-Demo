@@ -66,6 +66,9 @@ public class GridManager : MonoBehaviour
 
         if (matchFinder != null)
             RemoveInitialMatches();
+        
+        // TEST: Spawn a ColorBomb at start for debugging
+        SpawnTestColorBomb(new Vector2Int(width / 2, height / 2));
     }
 
     public Vector3 GridToWorld(int x, int y)
@@ -170,16 +173,18 @@ public class GridManager : MonoBehaviour
     }
     
     // Cascade Loop
-    public IEnumerator RemoveMatchesAndRefill()
+        public IEnumerator RemoveMatchesAndRefill()
     {
-        if (matchFinder == null) yield break;
+        if (matchFinder == null)
+            yield break;
 
         const int maxCascades = 20;
 
         for (int i = 0; i < maxCascades; i++)
         {
             var lines = FindMatchLines();
-            if (lines.Count == 0) break;
+            if (lines.Count == 0)
+                break;
 
             HashSet<Tile> matched = new HashSet<Tile>();
             foreach (var line in lines)
@@ -218,43 +223,49 @@ public class GridManager : MonoBehaviour
             for (int li = 0; li < lines.Count; li++)
             {
                 var line = lines[li];
-
-                if (line.isSquare) continue; // 2x2 
+                if (line.isSquare)
+                    continue; // 2x2
 
                 if (line.tiles.Count >= 5)
                 {
                     specialKind = TileKind.ColorBomb;
 
-                    if (lastSwapA != null && line.tiles.Contains(lastSwapA)) specialTile = lastSwapA;
-                    else if (lastSwapB != null && line.tiles.Contains(lastSwapB)) specialTile = lastSwapB;
-                    else specialTile = line.tiles[line.tiles.Count / 2];
+                    if (lastSwapA != null && line.tiles.Contains(lastSwapA))
+                        specialTile = lastSwapA;
+                    else if (lastSwapB != null && line.tiles.Contains(lastSwapB))
+                        specialTile = lastSwapB;
+                    else
+                        specialTile = line.tiles[line.tiles.Count / 2];
 
                     break;
                 }
             }
-
 
             if (specialTile == null)
             {
                 for (int li = 0; li < lines.Count; li++)
                 {
                     var line = lines[li];
-
-                    if (line.isSquare) continue; // 2x2 
+                    if (line.isSquare)
+                        continue; // 2x2
 
                     if (line.tiles.Count >= 4)
                     {
-                        specialKind = line.horizontal ? TileKind.RocketRow : TileKind.RocketCol;
+                        specialKind = line.horizontal
+                            ? TileKind.RocketRow
+                            : TileKind.RocketCol;
 
-                        if (lastSwapA != null && line.tiles.Contains(lastSwapA)) specialTile = lastSwapA;
-                        else if (lastSwapB != null && line.tiles.Contains(lastSwapB)) specialTile = lastSwapB;
-                        else specialTile = line.tiles[line.tiles.Count / 2];
+                        if (lastSwapA != null && line.tiles.Contains(lastSwapA))
+                            specialTile = lastSwapA;
+                        else if (lastSwapB != null && line.tiles.Contains(lastSwapB))
+                            specialTile = lastSwapB;
+                        else
+                            specialTile = line.tiles[line.tiles.Count / 2];
 
-                        break; 
+                        break;
                     }
                 }
             }
-
 
             if (specialTile != null && !specialTile.IsEmpty)
             {
@@ -266,18 +277,18 @@ public class GridManager : MonoBehaviour
                 StartCoroutine(t.FlashWhite(flashDuration));
 
             yield return new WaitForSeconds(flashDuration + afterFlashDelay);
-            
+
             foreach (var t in toClear)
                 t.SetEmpty(true);
-            
+
             yield return StartCoroutine(ApplyGravityAnimated());
-            
             yield return StartCoroutine(RefillEmptyTilesAnimated());
 
             lastSwapA = null;
             lastSwapB = null;
         }
     }
+
     
     // check again ResolveColorBombSwap !!! 
     private IEnumerator ResolveColorBombSwap(TileColor? targetColor)
@@ -613,4 +624,17 @@ public class GridManager : MonoBehaviour
         tex.Apply();
         return Sprite.Create(tex, new Rect(0, 0, 1, 1), new Vector2(0.5f, 0.5f), 1f);
     }
+    
+    // TEST: Spawn a ColorBomb at start for debugging 
+    private void SpawnTestColorBomb(Vector2Int pos)
+    { 
+        if (!IsInside(pos)) return;
+
+        Tile t = grid[pos.x, pos.y];
+        if (t == null) return;
+        
+        t.SetKind(TileKind.ColorBomb);
+        t.SetEmpty(false);
+    }
+
 }
