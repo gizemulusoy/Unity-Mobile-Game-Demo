@@ -16,4 +16,4 @@ MonoBehaviour:
   goals:
   - type: 0
     color: 2
-    amount: 25
+    amount: 5

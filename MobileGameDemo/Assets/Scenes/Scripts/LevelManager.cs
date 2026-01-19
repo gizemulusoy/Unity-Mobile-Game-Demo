@@ -8,6 +8,11 @@ public class LevelManager : MonoBehaviour
 
     [Header("Refs")]
     public GridManager grid;
+    
+    [Header("UI")]
+    public GameObject levelStartPanel;
+    public GameObject winPanel;
+    public GameObject losePanel;
 
     public int CurrentLevelIndex { get; private set; }
     public LevelData CurrentLevel { get; private set; }
@@ -33,7 +38,14 @@ public class LevelManager : MonoBehaviour
 
         // Push move limit into the grid system
         if (grid != null)
+        {
             grid.SetMovesFromLevel(MovesLeft);
+
+            // Reset board only for levels after Level 1
+            // because it contains temporary debug elements
+            if (CurrentLevelIndex > 0)
+                grid.ResetBoardForNewLevel();//reset the board when a new level starts
+        }
         
         RuntimeGoals = new LevelGoal[CurrentLevel.goals.Length];
         for (int i = 0; i < RuntimeGoals.Length; i++)
@@ -53,6 +65,12 @@ public class LevelManager : MonoBehaviour
 
         Debug.Log($"Level {CurrentLevelIndex + 1} started | Moves: {MovesLeft} | Goal: {RuntimeGoals[0].color} x {RuntimeGoals[0].amount}");
 
+        if (winPanel != null)
+            winPanel.SetActive(false);
+        
+        if (losePanel != null)
+            losePanel.SetActive(false);
+
     }
 
     // Called when tiles of a specific color are cleared from the grid.
@@ -65,8 +83,10 @@ public class LevelManager : MonoBehaviour
         {
             isTransitioning = true;
             Debug.Log("WIN! -> Next Level");
-            NextLevel();
-            isTransitioning = false;
+            //NextLevel();
+            //isTransitioning = false;
+            if (winPanel != null)
+                winPanel.SetActive(true);
         }
     }
 
@@ -104,4 +124,60 @@ public class LevelManager : MonoBehaviour
 
         return true;
     }
+    
+    public void OnPressStartFromBeginning()
+    {
+        if (levelStartPanel != null)
+            levelStartPanel.SetActive(false);
+        
+        startLevelIndex = 0;
+        StartLevel(0);
+    }
+
+    public void OnPressGoNextLevel()
+    {
+        if (winPanel != null)
+            winPanel.SetActive(false);
+
+        isTransitioning = false; // allow win to trigger again in the next level
+        NextLevel();
+    }
+
+    public void OnPressBackToMainMenu()
+    {
+        if (winPanel != null)
+            winPanel.SetActive(false);
+
+        if (levelStartPanel != null)
+            levelStartPanel.SetActive(true);
+
+        isTransitioning = false;
+    }
+    
+    public void OnPressRestartCurrentLevel()
+    {
+        Debug.Log("Restarting current level: " + (CurrentLevelIndex + 1));
+
+        isTransitioning = false;
+
+        // fresh board
+        if (grid != null)
+            grid.ResetBoardForNewLevel();
+
+        StartLevel(CurrentLevelIndex);
+    }
+    
+    public void OnMoveConsumed(int remainingMoves)
+    {
+        MovesLeft = remainingMoves;
+
+        if (MovesLeft <= 0 && !AllGoalsDone())
+        {
+            Debug.Log("LOSE!");
+
+            if (losePanel != null)
+                losePanel.SetActive(true);
+        }
+    }
+    
 }

@@ -658,7 +658,33 @@ public class GridManager : MonoBehaviour
     {
         moves--;
         if (movesUI != null) movesUI.SetMoves(moves);
+        
+        var levelManager = FindFirstObjectByType<LevelManager>();
+        if (levelManager != null)
+            levelManager.OnMoveConsumed(moves);
+
     }
+    
+    public void ResetBoardForNewLevel()
+    {
+        StopAllCoroutines();
 
+        lastSwapA = null;
+        lastSwapB = null;
+        
+        for (int x = 0; x < width; x++)
+        for (int y = 0; y < height; y++)
+        {
+            Tile t = grid[x, y];
+            if (t == null) continue;
 
+            t.SetKind(TileKind.Normal);
+            t.SetColor(RandomColor());
+            t.SetEmpty(false);
+        }
+        
+        if (matchFinder != null)
+            RemoveInitialMatches();
+    }
+    
 }
