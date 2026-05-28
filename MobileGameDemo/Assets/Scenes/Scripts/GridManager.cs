@@ -308,10 +308,12 @@ public class GridManager : MonoBehaviour
         if (targetColor.HasValue)
         {
             TileColor c = targetColor.Value;
+
             for (int x = 0; x < width; x++)
             for (int y = 0; y < height; y++)
             {
                 Tile t = grid[x, y];
+
                 if (!t.IsEmpty && t.Kind != TileKind.ColorBomb && t.ColorType == c)
                     toClear.Add(t);
             }
@@ -322,6 +324,7 @@ public class GridManager : MonoBehaviour
             for (int y = 0; y < height; y++)
             {
                 Tile t = grid[x, y];
+
                 if (!t.IsEmpty && t.Kind != TileKind.ColorBomb)
                     toClear.Add(t);
             }
@@ -331,6 +334,7 @@ public class GridManager : MonoBehaviour
         for (int y = 0; y < height; y++)
         {
             Tile t = grid[x, y];
+
             if (!t.IsEmpty && t.Kind == TileKind.ColorBomb)
                 toClear.Add(t);
         }
@@ -340,8 +344,24 @@ public class GridManager : MonoBehaviour
 
         yield return new WaitForSeconds(flashDuration + afterFlashDelay);
 
+        // solved : colorbomb goal count bug
+        Dictionary<TileColor, int> counts = new Dictionary<TileColor, int>();
+
+        foreach (var t in toClear)
+        {
+            if (t == null || t.IsEmpty) continue;
+
+            if (!counts.ContainsKey(t.ColorType))
+                counts[t.ColorType] = 0;
+
+            counts[t.ColorType]++;
+        }
+
         foreach (var t in toClear)
             t.SetEmpty(true);
+        
+        foreach (var kvp in counts)
+            onColorCleared?.Invoke(kvp.Key, kvp.Value);
 
         yield return StartCoroutine(ApplyGravityAnimated());
         yield return StartCoroutine(RefillEmptyTilesAnimated());
@@ -671,20 +691,27 @@ public class GridManager : MonoBehaviour
 
         lastSwapA = null;
         lastSwapB = null;
-        
-        for (int x = 0; x < width; x++)
-        for (int y = 0; y < height; y++)
-        {
-            Tile t = grid[x, y];
-            if (t == null) continue;
 
-            t.SetKind(TileKind.Normal);
-            t.SetColor(RandomColor());
-            t.SetEmpty(false);
+        for (int x = 0; x < width; x++)
+        {
+            for (int y = 0; y < height; y++)
+            {
+                Tile t = grid[x, y];
+
+                if (t == null)
+                    continue;
+
+                // tiles were visually stuck in the air, try to force tiles correct position
+                t.SetGridPos(new Vector2Int(x, y));
+                t.transform.position = GridToWorld(x, y);
+
+                t.SetKind(TileKind.Normal);
+                t.SetColor(RandomColor());
+                t.SetEmpty(false);
+            }
         }
-        
-        if (matchFinder != null)
-            RemoveInitialMatches();
+
+        RemoveInitialMatches();
     }
     
 }

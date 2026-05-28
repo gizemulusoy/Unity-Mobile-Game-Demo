@@ -1,4 +1,5 @@
 using UnityEngine;
+using TMPro;
 
 public class LevelManager : MonoBehaviour
 {
@@ -8,11 +9,14 @@ public class LevelManager : MonoBehaviour
 
     [Header("Refs")]
     public GridManager grid;
-    
+
     [Header("UI")]
     public GameObject levelStartPanel;
     public GameObject winPanel;
     public GameObject losePanel;
+
+    // GOAL UI
+    public TMP_Text goalText;
 
     public int CurrentLevelIndex { get; private set; }
     public LevelData CurrentLevel { get; private set; }
@@ -24,7 +28,6 @@ public class LevelManager : MonoBehaviour
 
     private void Start()
     {
-        // Always start from startLevelIndex
         CurrentLevelIndex = Mathf.Clamp(startLevelIndex, 0, database.levels.Length - 1);
         StartLevel(CurrentLevelIndex);
     }
@@ -36,18 +39,19 @@ public class LevelManager : MonoBehaviour
         CurrentLevel = database.levels[CurrentLevelIndex];
         MovesLeft = CurrentLevel.moveLimit;
 
-        // Push move limit into the grid system
+        // Grid setup
         if (grid != null)
         {
             grid.SetMovesFromLevel(MovesLeft);
 
-            // Reset board only for levels after Level 1
-            // because it contains temporary debug elements
+            // Reset board only after Level 1
+            // because Level 1 contains temporary debug elements
             if (CurrentLevelIndex > 0)
-                grid.ResetBoardForNewLevel();//reset the board when a new level starts
+                grid.ResetBoardForNewLevel();
         }
         
         RuntimeGoals = new LevelGoal[CurrentLevel.goals.Length];
+
         for (int i = 0; i < RuntimeGoals.Length; i++)
         {
             RuntimeGoals[i] = new LevelGoal
@@ -57,6 +61,9 @@ public class LevelManager : MonoBehaviour
                 amount = CurrentLevel.goals[i].amount
             };
         }
+
+        
+        UpdateGoalText();
         
         if (grid != null)
             grid.onColorCleared = HandleColorCleared;
@@ -64,17 +71,15 @@ public class LevelManager : MonoBehaviour
             Debug.LogError("LevelManager: Grid reference was not assigned in the Inspector!");
 
         Debug.Log($"Level {CurrentLevelIndex + 1} started | Moves: {MovesLeft} | Goal: {RuntimeGoals[0].color} x {RuntimeGoals[0].amount}");
-
+        
         if (winPanel != null)
             winPanel.SetActive(false);
-        
+
         if (losePanel != null)
             losePanel.SetActive(false);
-
     }
 
-    // Called when tiles of a specific color are cleared from the grid.
-    // Updates level goals and checks for win condition.
+    
     private void HandleColorCleared(TileColor color, int count)
     {
         DecreaseColorGoal(color, count);
@@ -82,9 +87,9 @@ public class LevelManager : MonoBehaviour
         if (!isTransitioning && AllGoalsDone())
         {
             isTransitioning = true;
-            Debug.Log("WIN! -> Next Level");
-            //NextLevel();
-            //isTransitioning = false;
+
+            Debug.Log("WIN!");
+
             if (winPanel != null)
                 winPanel.SetActive(true);
         }
@@ -93,44 +98,73 @@ public class LevelManager : MonoBehaviour
     public void NextLevel()
     {
         int next = Mathf.Min(CurrentLevelIndex + 1, database.levels.Length - 1);
+
         Debug.Log("NextLevel -> Level " + (next + 1));
+
         StartLevel(next);
     }
 
     public void DecreaseColorGoal(TileColor color, int count)
     {
-        if (RuntimeGoals == null) return;
+        if (RuntimeGoals == null)
+            return;
 
         for (int i = 0; i < RuntimeGoals.Length; i++)
         {
             var g = RuntimeGoals[i];
 
-            if (g.type == LevelGoalType.ClearColor && g.color == color && g.amount > 0)
+            if (g.type == LevelGoalType.ClearColor &&
+                g.color == color &&
+                g.amount > 0)
             {
                 g.amount = Mathf.Max(0, g.amount - count);
+
                 RuntimeGoals[i] = g;
 
-                Debug.Log($"Goal update: {g.color} kaldı {g.amount}");
+                Debug.Log($"Goal update: {g.color} left {g.amount}");
+                
+                UpdateGoalText();
             }
         }
+    }
+    
+    private void UpdateGoalText()
+    {
+        if (goalText == null || RuntimeGoals == null || RuntimeGoals.Length == 0)
+            return;
+
+        string text = "Goal:";
+
+        for (int i = 0; i < RuntimeGoals.Length; i++)
+        {
+            LevelGoal goal = RuntimeGoals[i];
+            text += $"\n{goal.color} x {goal.amount}";
+        }
+
+        goalText.text = text;
     }
 
     public bool AllGoalsDone()
     {
-        if (RuntimeGoals == null) return false;
+        if (RuntimeGoals == null || RuntimeGoals.Length == 0)
+            return false;
 
         for (int i = 0; i < RuntimeGoals.Length; i++)
-            if (RuntimeGoals[i].amount > 0) return false;
+        {
+            if (RuntimeGoals[i].amount > 0)
+                return false;
+        }
 
         return true;
     }
-    
+
     public void OnPressStartFromBeginning()
     {
         if (levelStartPanel != null)
             levelStartPanel.SetActive(false);
-        
+
         startLevelIndex = 0;
+
         StartLevel(0);
     }
 
@@ -139,7 +173,8 @@ public class LevelManager : MonoBehaviour
         if (winPanel != null)
             winPanel.SetActive(false);
 
-        isTransitioning = false; // allow win to trigger again in the next level
+        isTransitioning = false;
+
         NextLevel();
     }
 
@@ -153,20 +188,20 @@ public class LevelManager : MonoBehaviour
 
         isTransitioning = false;
     }
-    
+
     public void OnPressRestartCurrentLevel()
     {
         Debug.Log("Restarting current level: " + (CurrentLevelIndex + 1));
 
         isTransitioning = false;
 
-        // fresh board
+        // Fresh board
         if (grid != null)
             grid.ResetBoardForNewLevel();
 
         StartLevel(CurrentLevelIndex);
     }
-    
+
     public void OnMoveConsumed(int remainingMoves)
     {
         MovesLeft = remainingMoves;
@@ -179,5 +214,4 @@ public class LevelManager : MonoBehaviour
                 losePanel.SetActive(true);
         }
     }
-    
 }

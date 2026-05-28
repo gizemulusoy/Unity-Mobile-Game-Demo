@@ -1,5 +1,6 @@
 using UnityEngine;
 using System.Collections;
+using UnityEngine.EventSystems;
 
 public class SwapInput : MonoBehaviour
 {
@@ -8,6 +9,9 @@ public class SwapInput : MonoBehaviour
 
     void Update()
     {
+        // block gameplay input 
+        if (IsPointerOverUI())
+            return;
         
         if (Input.GetMouseButtonDown(0))
             Debug.Log("CLICK!");
@@ -28,6 +32,19 @@ public class SwapInput : MonoBehaviour
         if (clicked == null) return;
 
         HandleClick(clicked);
+    }
+    
+    private bool IsPointerOverUI()
+    {
+        if (EventSystem.current == null)
+            return false;
+
+        // mobile touch
+        if (Input.touchCount > 0)
+            return EventSystem.current.IsPointerOverGameObject(Input.GetTouch(0).fingerId);
+
+        // mouse 
+        return EventSystem.current.IsPointerOverGameObject();
     }
 
     void HandleClick(Tile clicked)
