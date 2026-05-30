@@ -60,10 +60,15 @@ public class GridManager : MonoBehaviour
 
         GenerateGrid();
         
+        // TEST: remporary ice tiles
+        /* grid[3, 3].SetIce(true);
+        grid[4, 4].SetIce(true);
+        grid[5, 5].SetIce(true); */
+        
         if (matchFinder != null)
             RemoveInitialMatches();
         
-        // TEST: Spawn a ColorBomb at start for debugging
+        // TEST: spawn a ColorBomb at start for debugging
         SpawnTestColorBomb(new Vector2Int(width / 2, height / 2));
     }
 
@@ -282,6 +287,9 @@ public class GridManager : MonoBehaviour
 
             counts[t.ColorType]++;
         }
+        
+        // break ice blocks 
+        BreakIceAroundClearedTiles(toClear);
 
         foreach (var t in toClear)
             t.SetEmpty(true);
@@ -314,7 +322,7 @@ public class GridManager : MonoBehaviour
             {
                 Tile t = grid[x, y];
 
-                if (!t.IsEmpty && t.Kind != TileKind.ColorBomb && t.ColorType == c)
+                if (!t.IsEmpty && !t.HasIce && t.Kind != TileKind.ColorBomb && t.ColorType == c)
                     toClear.Add(t);
             }
         }
@@ -325,7 +333,7 @@ public class GridManager : MonoBehaviour
             {
                 Tile t = grid[x, y];
 
-                if (!t.IsEmpty && t.Kind != TileKind.ColorBomb)
+                if (!t.IsEmpty && !t.HasIce && t.Kind != TileKind.ColorBomb)
                     toClear.Add(t);
             }
         }
@@ -431,42 +439,44 @@ public class GridManager : MonoBehaviour
 
         for (int x = 0; x < width; x++)
         {
-            List<Tile> nonEmpty = new List<Tile>(height);
-            List<Tile> empty = new List<Tile>(height);
+            int writeY = 0;
 
             for (int y = 0; y < height; y++)
             {
-                Tile t = grid[x, y];
-                if (t.IsEmpty) empty.Add(t);
-                else nonEmpty.Add(t);
-            }
+                Tile current = grid[x, y];
 
-            List<Tile> newCol = new List<Tile>(height);
-            newCol.AddRange(nonEmpty);
-            newCol.AddRange(empty);
-
-            for (int y = 0; y < height; y++)
-            {
-                Tile t = newCol[y];
-                grid[x, y] = t;
-
-                Vector2Int newPos = new Vector2Int(x, y);
-                t.SetGridPos(newPos);
-
-                Vector3 target = GridToWorld(x, y);
-
-                if (t.IsEmpty)
+                if (current.HasIce)
                 {
-                    t.transform.position = target;
+                    // Ice tiles are fixed blockers and should not move during gravity
+                    writeY = y + 1;
+                    current.transform.position = GridToWorld(x, y);
+                    current.SetGridPos(new Vector2Int(x, y));
+                    continue;
                 }
-                else
+
+                if (current.IsEmpty)
+                    continue;
+
+                if (writeY != y)
                 {
-                    if (t.transform.position != target)
-                    {
-                        anyMove = true;
-                        StartCoroutine(MoveTo(t, target, fallDuration));
-                    }
+                    Tile target = grid[x, writeY];
+
+                    grid[x, writeY] = current;
+                    grid[x, y] = target;
+
+                    current.SetGridPos(new Vector2Int(x, writeY));
+                    target.SetGridPos(new Vector2Int(x, y));
+
+                    Vector3 targetPos = GridToWorld(x, writeY);
+                    Vector3 emptyPos = GridToWorld(x, y);
+
+                    target.transform.position = emptyPos;
+
+                    anyMove = true;
+                    StartCoroutine(MoveTo(current, targetPos, fallDuration));
                 }
+
+                writeY++;
             }
         }
 
@@ -543,6 +553,8 @@ public class GridManager : MonoBehaviour
     {
         if (a == null || b == null) return false;
         if (a.IsEmpty || b.IsEmpty) return false;
+        if (a.HasIce || b.HasIce) return false;
+
         return a.ColorType == b.ColorType;
     }
 
@@ -559,7 +571,9 @@ public class GridManager : MonoBehaviour
                 Tile prev = grid[x - 1, y];
                 Tile cur = grid[x, y];
 
-                bool same = !prev.IsEmpty && !cur.IsEmpty && prev.ColorType == cur.ColorType;
+                bool same = !prev.IsEmpty && !cur.IsEmpty
+                                          && !prev.HasIce && !cur.HasIce
+                                          && prev.ColorType == cur.ColorType;
                 if (same) run++;
                 else
                 {
@@ -589,7 +603,9 @@ public class GridManager : MonoBehaviour
                 Tile prev = grid[x, y - 1];
                 Tile cur = grid[x, y];
 
-                bool same = !prev.IsEmpty && !cur.IsEmpty && prev.ColorType == cur.ColorType;
+                bool same = !prev.IsEmpty && !cur.IsEmpty
+                                          && !prev.HasIce && !cur.HasIce
+                                          && prev.ColorType == cur.ColorType;
                 if (same) run++;
                 else
                 {
@@ -706,12 +722,46 @@ public class GridManager : MonoBehaviour
                 t.transform.position = GridToWorld(x, y);
 
                 t.SetKind(TileKind.Normal);
+                
+                // Clear ice from the previous level
+                t.SetIce(false);
+                
                 t.SetColor(RandomColor());
                 t.SetEmpty(false);
             }
         }
 
         RemoveInitialMatches();
+    }
+    
+    private void BreakIceAroundClearedTiles(HashSet<Tile> clearedTiles)
+    {
+        Vector2Int[] directions =
+        {
+            Vector2Int.up,
+            Vector2Int.down,
+            Vector2Int.left,
+            Vector2Int.right
+        };
+
+        foreach (Tile clearedTile in clearedTiles)
+        {
+            if (clearedTile == null)
+                continue;
+
+            foreach (Vector2Int dir in directions)
+            {
+                Vector2Int neighborPos = clearedTile.GridPos + dir;
+
+                if (!IsInside(neighborPos))
+                    continue;
+
+                Tile neighbor = grid[neighborPos.x, neighborPos.y];
+
+                if (neighbor != null && neighbor.HasIce)
+                    neighbor.SetIce(false);
+            }
+        }
     }
     
 }

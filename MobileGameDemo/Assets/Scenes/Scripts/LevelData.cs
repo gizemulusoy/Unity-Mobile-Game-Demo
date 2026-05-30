@@ -10,10 +10,19 @@ public class LevelGoal
     public int amount;
 }
 
-[CreateAssetMenu(menuName = "Match3/Level Data", fileName = "Level_")]
+[System.Serializable]
+public struct IcePosition
+{
+    public int x;
+    public int y;
+}
 
+[CreateAssetMenu(menuName = "Match3/Level Data", fileName = "Level_")]
 public class LevelData : ScriptableObject
 {
     public int moveLimit = 20;
     public LevelGoal[] goals;
+
+    [Header("Ice")]
+    public IcePosition[] icePositions;
 }

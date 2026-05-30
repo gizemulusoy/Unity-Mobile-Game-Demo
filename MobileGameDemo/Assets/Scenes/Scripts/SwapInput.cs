@@ -30,6 +30,10 @@ public class SwapInput : MonoBehaviour
 
         Tile clicked = hit.collider.GetComponent<Tile>();
         if (clicked == null) return;
+        
+        // ice
+        if (clicked.HasIce)
+            return;
 
         HandleClick(clicked);
     }

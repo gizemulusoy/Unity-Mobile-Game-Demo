@@ -25,6 +25,11 @@ public class Tile : MonoBehaviour
     public TileKind Kind { get; private set; } = TileKind.Normal;
     private SpriteRenderer markerSr;
     
+    // ice 
+    private SpriteRenderer[] iceBorderSrs;
+    
+    public bool HasIce { get; private set; }
+    
     private Sprite baseSprite;
 
     public void Init(Vector2Int gridPos, TileColor colorType, Sprite sprite, float size)
@@ -53,7 +58,7 @@ public class Tile : MonoBehaviour
         outlineSr.sortingOrder = sr.sortingOrder - 1;
         outlineSr.enabled = false;
 
-        // Marker (baklava/işaret)
+        // Marker (baklava)
         var markerGO = new GameObject("Marker");
         markerGO.transform.SetParent(transform);
         markerGO.transform.localPosition = Vector3.zero;
@@ -66,6 +71,9 @@ public class Tile : MonoBehaviour
         markerSr.enabled = false;
 
         SetKind(TileKind.Normal);
+        
+        //ice
+        CreateIceBorder(sprite, sr.sortingOrder + 2);
     }
 
     public void SetGridPos(Vector2Int newPos)
@@ -134,8 +142,7 @@ public class Tile : MonoBehaviour
 
             return;
         }
-
-        // Default
+        
         markerSr.transform.localScale = new Vector3(0.45f, 0.45f, 1f);
         markerSr.transform.localRotation = Quaternion.Euler(0f, 0f, 45f);
     }
@@ -177,4 +184,57 @@ public class Tile : MonoBehaviour
         if (empty)
             SetKind(TileKind.Normal);
     }
+    
+    // ice
+    public void SetIce(bool hasIce)
+    {
+        HasIce = hasIce;
+
+        if (iceBorderSrs == null)
+            return;
+
+        for (int i = 0; i < iceBorderSrs.Length; i++)
+        {
+            if (iceBorderSrs[i] != null)
+                iceBorderSrs[i].enabled = hasIce;
+        }
+    }
+    
+    
+    private void CreateIceBorder(Sprite sprite, int sortingOrder)
+    {
+        iceBorderSrs = new SpriteRenderer[4];
+
+        GameObject parent = new GameObject("IceBorder");
+        parent.transform.SetParent(transform);
+        parent.transform.localPosition = Vector3.zero;
+        parent.transform.localScale = Vector3.one;
+
+        Color iceColor = new Color(0.85f, 0.97f, 1f, 0.95f);
+
+        CreateIceLine(parent.transform, sprite, sortingOrder, 0, new Vector3(0f, 0.52f, 0f), new Vector3(1.12f, 0.08f, 1f), iceColor);  // Top
+        CreateIceLine(parent.transform, sprite, sortingOrder, 1, new Vector3(0f, -0.52f, 0f), new Vector3(1.12f, 0.08f, 1f), iceColor); // Bottom
+        CreateIceLine(parent.transform, sprite, sortingOrder, 2, new Vector3(-0.52f, 0f, 0f), new Vector3(0.08f, 1.12f, 1f), iceColor); // Left
+        CreateIceLine(parent.transform, sprite, sortingOrder, 3, new Vector3(0.52f, 0f, 0f), new Vector3(0.08f, 1.12f, 1f), iceColor);  // Right
+
+        SetIce(false);
+    }
+
+    private void CreateIceLine(Transform parent, Sprite sprite, int sortingOrder, int index, Vector3 localPos, Vector3 localScale, Color color)
+    {
+        GameObject line = new GameObject("IceLine");
+        line.transform.SetParent(parent);
+        line.transform.localPosition = localPos;
+        line.transform.localScale = localScale;
+
+        SpriteRenderer lineSr = line.AddComponent<SpriteRenderer>();
+        lineSr.sprite = sprite;
+        lineSr.sortingOrder = sortingOrder;
+        lineSr.color = color;
+        lineSr.enabled = false;
+
+        iceBorderSrs[index] = lineSr;
+    }
+    
+    
 }

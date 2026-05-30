@@ -44,10 +44,23 @@ public class LevelManager : MonoBehaviour
         {
             grid.SetMovesFromLevel(MovesLeft);
 
-            // Reset board only after Level 1
-            // because Level 1 contains temporary debug elements
+            // reset board only after Level 1
+            // because l1 contains temporary debug elements
             if (CurrentLevelIndex > 0)
                 grid.ResetBoardForNewLevel();
+            
+        }
+        
+        // spawn ice blocks defined in the level asset
+        if (grid != null)
+        {
+            foreach (var icePos in CurrentLevel.icePositions)
+            {
+                Tile tile = grid.GetTile(new Vector2Int(icePos.x, icePos.y));
+
+                if (tile != null)
+                    tile.SetIce(true);
+            }
         }
         
         RuntimeGoals = new LevelGoal[CurrentLevel.goals.Length];

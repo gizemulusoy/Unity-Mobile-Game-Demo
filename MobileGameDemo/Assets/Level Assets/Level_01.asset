@@ -17,3 +17,14 @@ MonoBehaviour:
   - type: 0
     color: 0
     amount: 6
+  icePositions:
+  - x: 3
+    y: 3
+  - x: 3
+    y: 4
+  - x: 3
+    y: 5
+  - x: 3
+    y: 6
+  - x: 3
+    y: 7
