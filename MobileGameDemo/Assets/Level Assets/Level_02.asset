@@ -17,6 +17,12 @@ MonoBehaviour:
   - type: 0
     color: 2
     amount: 5
+  - type: 0
+    color: 2
+    amount: 5
+  - type: 1
+    color: 2
+    amount: 2
   icePositions:
   - x: 5
     y: 5

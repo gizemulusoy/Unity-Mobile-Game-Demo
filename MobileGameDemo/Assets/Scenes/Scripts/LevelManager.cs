@@ -79,12 +79,17 @@ public class LevelManager : MonoBehaviour
         UpdateGoalText();
         
         if (grid != null)
+        {
             grid.onColorCleared = HandleColorCleared;
+            grid.onIceBroken = HandleIceBroken;
+        }
         else
+        {
             Debug.LogError("LevelManager: Grid reference was not assigned in the Inspector!");
+        }
 
         Debug.Log($"Level {CurrentLevelIndex + 1} started | Moves: {MovesLeft} | Goal: {RuntimeGoals[0].color} x {RuntimeGoals[0].amount}");
-        
+
         if (winPanel != null)
             winPanel.SetActive(false);
 
@@ -106,7 +111,32 @@ public class LevelManager : MonoBehaviour
             if (winPanel != null)
                 winPanel.SetActive(true);
         }
+        
+        if (!AllGoalsDone() && MovesLeft <= 0)
+        {
+            Debug.Log("LOSE!");
+
+            if (losePanel != null)
+                losePanel.SetActive(true);
+        }
+        
     }
+    
+    private void HandleIceBroken(int count)
+    {
+        DecreaseIceGoal(count);
+
+        if (!isTransitioning && AllGoalsDone())
+        {
+            isTransitioning = true;
+
+            Debug.Log("WIN!");
+
+            if (winPanel != null)
+                winPanel.SetActive(true);
+        }
+    }
+    
 
     public void NextLevel()
     {
@@ -141,6 +171,27 @@ public class LevelManager : MonoBehaviour
         }
     }
     
+    public void DecreaseIceGoal(int count)
+    {
+        if (RuntimeGoals == null)
+            return;
+
+        for (int i = 0; i < RuntimeGoals.Length; i++)
+        {
+            var g = RuntimeGoals[i];
+
+            if (g.type == LevelGoalType.BreakIce && g.amount > 0)
+            {
+                g.amount = Mathf.Max(0, g.amount - count);
+                RuntimeGoals[i] = g;
+
+                Debug.Log($"Goal update: Ice left {g.amount}");
+
+                UpdateGoalText();
+            }
+        }
+    }
+    
     private void UpdateGoalText()
     {
         if (goalText == null || RuntimeGoals == null || RuntimeGoals.Length == 0)
@@ -151,7 +202,15 @@ public class LevelManager : MonoBehaviour
         for (int i = 0; i < RuntimeGoals.Length; i++)
         {
             LevelGoal goal = RuntimeGoals[i];
-            text += $"\n{goal.color} x {goal.amount}";
+
+            if (goal.type == LevelGoalType.ClearColor)
+            {
+                text += $"\n{goal.color} x {goal.amount}";
+            }
+            else if (goal.type == LevelGoalType.BreakIce)
+            {
+                text += $"\nIce x {goal.amount}";
+            }
         }
 
         goalText.text = text;
@@ -218,13 +277,6 @@ public class LevelManager : MonoBehaviour
     public void OnMoveConsumed(int remainingMoves)
     {
         MovesLeft = remainingMoves;
-
-        if (MovesLeft <= 0 && !AllGoalsDone())
-        {
-            Debug.Log("LOSE!");
-
-            if (losePanel != null)
-                losePanel.SetActive(true);
-        }
     }
+    
 }

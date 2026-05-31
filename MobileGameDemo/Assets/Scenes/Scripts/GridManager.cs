@@ -46,6 +46,8 @@ public class GridManager : MonoBehaviour
     
     // for Level System 
     public System.Action<TileColor, int> onColorCleared;
+    // for Ice Breakinhg
+    public System.Action<int> onIceBroken;
     
     private void Awake()
     {
@@ -736,6 +738,8 @@ public class GridManager : MonoBehaviour
     
     private void BreakIceAroundClearedTiles(HashSet<Tile> clearedTiles)
     {
+        int brokenIceCount = 0;
+
         Vector2Int[] directions =
         {
             Vector2Int.up,
@@ -759,9 +763,15 @@ public class GridManager : MonoBehaviour
                 Tile neighbor = grid[neighborPos.x, neighborPos.y];
 
                 if (neighbor != null && neighbor.HasIce)
+                {
                     neighbor.SetIce(false);
+                    brokenIceCount++;
+                }
             }
         }
+
+        if (brokenIceCount > 0)
+            onIceBroken?.Invoke(brokenIceCount);
     }
     
 }

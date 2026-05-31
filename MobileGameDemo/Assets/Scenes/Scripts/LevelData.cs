@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public enum LevelGoalType { ClearColor }
+public enum LevelGoalType {ClearColor, BreakIce }
 
 [System.Serializable]
 public class LevelGoal
