@@ -7,8 +7,7 @@
     <list default="true" id="4a465f50-e89e-4cca-979f-76479a6c66b9" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/.idea.MobileGameDemo/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.MobileGameDemo/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Assets/Scenes/Scripts/GridManager.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Scenes/Scripts/GridManager.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/Scenes/Scripts/LevelData.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Scenes/Scripts/LevelData.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/Scenes/Scripts/LevelManager.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Scenes/Scripts/LevelManager.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Scenes/Scripts/Tile.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Scenes/Scripts/Tile.cs" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -114,6 +113,7 @@
       <workItem from="1779981552701" duration="4834000" />
       <workItem from="1780131346207" duration="6341000" />
       <workItem from="1780226308760" duration="2128000" />
+      <workItem from="1780403098990" duration="1979000" />
     </task>
     <servers />
   </component>

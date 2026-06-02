@@ -72,6 +72,9 @@ public class GridManager : MonoBehaviour
         
         // TEST: spawn a ColorBomb at start for debugging
         SpawnTestColorBomb(new Vector2Int(width / 2, height / 2));
+        
+        // TEST: spawn a bomb at start for debugging
+        grid[7, 4].SetKind(TileKind.Bomb);
     }
 
     public Vector3 GridToWorld(int x, int y)
@@ -202,7 +205,7 @@ public class GridManager : MonoBehaviour
                 int y = t.GridPos.y;
                 for (int x = 0; x < width; x++)
                 {
-                    if (!grid[x, y].IsEmpty)
+                    if (!grid[x, y].IsEmpty && !grid[x, y].HasIce)
                         toClear.Add(grid[x, y]);
                 }
             }
@@ -211,33 +214,74 @@ public class GridManager : MonoBehaviour
                 int x = t.GridPos.x;
                 for (int y = 0; y < height; y++)
                 {
-                    if (!grid[x, y].IsEmpty)
+                    if (!grid[x, y].IsEmpty && !grid[x, y].HasIce)
                         toClear.Add(grid[x, y]);
+                }
+            }
+            else if (t.Kind == TileKind.Bomb)
+            {
+                Vector2Int center = t.GridPos;
+
+                int startX = Mathf.Clamp(center.x - 1, 0, width - 3);
+                int startY = Mathf.Clamp(center.y - 1, 0, height - 3);
+
+                for (int x = startX; x < startX + 3; x++)
+                {
+                    for (int y = startY; y < startY + 3; y++)
+                    {
+                        Tile target = grid[x, y];
+
+                        if (target != null && !target.IsEmpty && !target.HasIce)
+                            toClear.Add(target);
+                    }
                 }
             }
         }
 
         Tile specialTile = null;
         TileKind specialKind = TileKind.Normal;
-
+        
+        // 2x2 square match creates a Bomb
         for (int li = 0; li < lines.Count; li++)
         {
             var line = lines[li];
-            if (line.isSquare)
-                continue; // 2x2
 
-            if (line.tiles.Count >= 5)
+            if (line.isSquare)
             {
-                specialKind = TileKind.ColorBomb;
+                specialKind = TileKind.Bomb;
 
                 if (lastSwapA != null && line.tiles.Contains(lastSwapA))
                     specialTile = lastSwapA;
                 else if (lastSwapB != null && line.tiles.Contains(lastSwapB))
                     specialTile = lastSwapB;
                 else
-                    specialTile = line.tiles[line.tiles.Count / 2];
+                    specialTile = line.tiles[0];
 
                 break;
+            }
+        }
+
+        if (specialTile == null)
+        {
+            for (int li = 0; li < lines.Count; li++)
+            {
+                var line = lines[li];
+                if (line.isSquare)
+                    continue; // 2x2 already handled as Bomb
+
+                if (line.tiles.Count >= 5)
+                {
+                    specialKind = TileKind.ColorBomb;
+
+                    if (lastSwapA != null && line.tiles.Contains(lastSwapA))
+                        specialTile = lastSwapA;
+                    else if (lastSwapB != null && line.tiles.Contains(lastSwapB))
+                        specialTile = lastSwapB;
+                    else
+                        specialTile = line.tiles[line.tiles.Count / 2];
+
+                    break;
+                }
             }
         }
 

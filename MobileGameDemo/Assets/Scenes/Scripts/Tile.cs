@@ -8,7 +8,7 @@ public enum TileColor
 
 public enum TileKind
 {
-    Normal, RocketRow, RocketCol, ColorBomb
+    Normal, RocketRow, RocketCol, ColorBomb, Bomb
 }
 
 [RequireComponent(typeof(SpriteRenderer))]
@@ -139,6 +139,21 @@ public class Tile : MonoBehaviour
 
             if (baseSprite != null) sr.sprite = baseSprite;
             sr.color = new Color(0.08f, 0.08f, 0.08f); // koyu siyah / koyu gri
+
+            return;
+        }
+        
+        // Bomb
+        if (kind == TileKind.Bomb)
+        {
+            markerSr.enabled = true;
+            markerSr.transform.localScale = new Vector3(0.55f, 0.55f, 1f);
+            markerSr.transform.localRotation = Quaternion.identity;
+
+            if (baseSprite != null) sr.sprite = baseSprite;
+            sr.color = ToUnityColor(ColorType);
+
+            markerSr.color = new Color(0.05f, 0.05f, 0.05f, 0.95f);
 
             return;
         }
