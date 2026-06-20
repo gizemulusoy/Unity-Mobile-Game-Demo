@@ -14,6 +14,9 @@ public class LevelManager : MonoBehaviour
     public GameObject levelStartPanel;
     public GameObject winPanel;
     public GameObject losePanel;
+    
+    public GameObject levelsPanel;
+    public GameObject settingsPanel;
 
     // GOAL UI
     public TMP_Text goalText;
@@ -105,11 +108,16 @@ public class LevelManager : MonoBehaviour
         if (!isTransitioning && AllGoalsDone())
         {
             isTransitioning = true;
+            
+            UnlockNextLevel(); // for levels menu
 
             Debug.Log("WIN!");
 
             if (winPanel != null)
                 winPanel.SetActive(true);
+            
+            
+            
         }
         
         if (!AllGoalsDone() && MovesLeft <= 0)
@@ -129,6 +137,8 @@ public class LevelManager : MonoBehaviour
         if (!isTransitioning && AllGoalsDone())
         {
             isTransitioning = true;
+            
+            UnlockNextLevel(); // for levels menu
 
             Debug.Log("WIN!");
 
@@ -279,4 +289,74 @@ public class LevelManager : MonoBehaviour
         MovesLeft = remainingMoves;
     }
     
+    public void OnPressOpenLevels()
+    {
+        if (levelsPanel != null)
+            levelsPanel.SetActive(true);
+    }
+
+    public void OnPressCloseLevels()
+    {
+        if (levelsPanel != null)
+            levelsPanel.SetActive(false);
+    }
+
+    public void OnPressOpenSettings()
+    {
+        if (settingsPanel != null)
+            settingsPanel.SetActive(true);
+    }
+
+    public void OnPressCloseSettings()
+    {
+        if (settingsPanel != null)
+            settingsPanel.SetActive(false);
+    }
+    
+    
+    public bool IsLevelUnlocked(int levelIndex)
+    {
+        int unlockedLevel = PlayerPrefs.GetInt("UnlockedLevel", 0);
+        
+       
+        
+        return levelIndex <= unlockedLevel;
+    }
+
+    public void OnPressSelectLevel(int levelIndex)
+    {
+        if (!IsLevelUnlocked(levelIndex))
+        {
+            Debug.Log("This level is locked: " + (levelIndex + 1));
+            return;
+        }
+
+        if (levelStartPanel != null)
+            levelStartPanel.SetActive(false);
+
+        if (levelsPanel != null)
+            levelsPanel.SetActive(false);
+
+        isTransitioning = false;
+
+        StartLevel(levelIndex);
+    }
+    
+    private void UnlockNextLevel()
+    {
+        int unlockedLevel = PlayerPrefs.GetInt("UnlockedLevel", 0);
+        int nextLevel = CurrentLevelIndex + 1;
+
+        if (nextLevel > unlockedLevel)
+        {
+            PlayerPrefs.SetInt("UnlockedLevel", nextLevel);
+            PlayerPrefs.Save();
+        }
+    }
+    [ContextMenu("Reset Progress")]
+    public void ResetProgress()
+    {
+        PlayerPrefs.SetInt("UnlockedLevel", 0);
+        PlayerPrefs.Save();
+    }
 }
