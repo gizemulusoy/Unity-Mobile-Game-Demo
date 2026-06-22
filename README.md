@@ -17,3 +17,7 @@ Players must complete all level objectives within a limited number of moves. Obj
   
 #### Ice : Ice locks tiles in place until broken by clearing nearby matches.
 - Displayed as a light border around a tile.
+
+## Gameplay Preview Video 
+https://youtu.be/jGSbQ3bcbJs
+
