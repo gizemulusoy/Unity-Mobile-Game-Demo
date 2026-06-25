@@ -11,6 +11,7 @@ public enum TileKind
     Normal, RocketRow, RocketCol, ColorBomb, Bomb
 }
 
+
 [RequireComponent(typeof(SpriteRenderer))]
 public class Tile : MonoBehaviour
 {
@@ -26,7 +27,8 @@ public class Tile : MonoBehaviour
     private SpriteRenderer markerSr;
     
     // ice 
-    private SpriteRenderer[] iceBorderSrs;
+    //private SpriteRenderer[] iceBorderSrs; changed because of new way to add ice (image)
+    private SpriteRenderer iceOverlaySr;
     
     public bool HasIce { get; private set; }
     
@@ -41,11 +43,12 @@ public class Tile : MonoBehaviour
 
         baseSprite = sprite;
         sr.sprite = baseSprite;
-        sr.color = ToUnityColor(colorType);
+        //sr.color = ToUnityColor(colorType);
+        sr.color = Color.white;
 
         transform.localScale = Vector3.one * size;
         name = $"Tile_{gridPos.x}_{gridPos.y}_{colorType}";
-
+        /*
         // Outline
         var outlineGO = new GameObject("Outline");
         outlineGO.transform.SetParent(transform);
@@ -56,8 +59,9 @@ public class Tile : MonoBehaviour
         outlineSr.sprite = sprite;
         outlineSr.color = Color.white;
         outlineSr.sortingOrder = sr.sortingOrder - 1;
-        outlineSr.enabled = false;
+        outlineSr.enabled = false; */
 
+        /*
         // Marker (baklava)
         var markerGO = new GameObject("Marker");
         markerGO.transform.SetParent(transform);
@@ -68,12 +72,30 @@ public class Tile : MonoBehaviour
         markerSr.sprite = sprite;
         markerSr.sortingOrder = sr.sortingOrder + 1;
         markerSr.color = new Color(1f, 1f, 1f, 0.9f);
-        markerSr.enabled = false;
+        markerSr.enabled = false; */
 
         SetKind(TileKind.Normal);
         
         //ice
-        CreateIceBorder(sprite, sr.sortingOrder + 2);
+        //CreateIceBorder(sprite, sr.sortingOrder + 2);
+        
+    }
+    
+    // after tile creation, ice image gonna be add
+    public void SetupIceOverlay(Sprite iceSprite)
+    {
+        if (iceOverlaySr != null || iceSprite == null) return;
+
+        GameObject iceGO = new GameObject("IceOverlay");
+        iceGO.transform.SetParent(transform);
+        iceGO.transform.localPosition = Vector3.zero;
+        iceGO.transform.localScale = Vector3.one;
+
+        iceOverlaySr = iceGO.AddComponent<SpriteRenderer>();
+        iceOverlaySr.sprite = iceSprite;
+        iceOverlaySr.sortingOrder = sr.sortingOrder + 2;
+        iceOverlaySr.color = Color.white;
+        iceOverlaySr.enabled = false;
     }
 
     public void SetGridPos(Vector2Int newPos)
@@ -87,9 +109,26 @@ public class Tile : MonoBehaviour
         if (sr == null) sr = GetComponent<SpriteRenderer>();
         
         if (Kind == TileKind.Normal)
-            sr.color = ToUnityColor(newColor);
+            //sr.color = ToUnityColor(newColor);
+            sr.color = Color.white;
+    }
+    
+    public void SetSprite(Sprite sprite)
+    {
+        if (sr == null) sr = GetComponent<SpriteRenderer>();
+
+        baseSprite = sprite;
+        sr.sprite = baseSprite;
+
+        if (outlineSr != null)
+            outlineSr.sprite = baseSprite;
+
+        if (markerSr != null)
+            markerSr.sprite = baseSprite;
     }
 
+    
+    /*
     public void SetKind(TileKind kind)
     {
         Kind = kind;
@@ -104,10 +143,13 @@ public class Tile : MonoBehaviour
             markerSr.transform.localRotation = Quaternion.identity;
             
             if (baseSprite != null) sr.sprite = baseSprite;
-            sr.color = ToUnityColor(ColorType);
+            // sr.color = ToUnityColor(ColorType);
+            sr.color = Color.white;
 
             return;
-        }
+        } 
+        
+        
         
         markerSr.enabled = true;
         markerSr.transform.localRotation = Quaternion.identity;
@@ -117,7 +159,8 @@ public class Tile : MonoBehaviour
             markerSr.transform.localScale = new Vector3(0.75f, 0.18f, 1f);
             
             if (baseSprite != null) sr.sprite = baseSprite;
-            sr.color = ToUnityColor(ColorType);
+            //sr.color = ToUnityColor(ColorType);
+            sr.color = Color.white;
             return;
         }
 
@@ -126,10 +169,12 @@ public class Tile : MonoBehaviour
             markerSr.transform.localScale = new Vector3(0.18f, 0.75f, 1f);
             
             if (baseSprite != null) sr.sprite = baseSprite;
-            sr.color = ToUnityColor(ColorType);
+            // sr.color = ToUnityColor(ColorType);
+            sr.color = Color.white;
             return;
         }
 
+        
         // ColorBomb
         if (kind == TileKind.ColorBomb)
         {
@@ -138,7 +183,7 @@ public class Tile : MonoBehaviour
             markerSr.transform.localRotation = Quaternion.Euler(0f, 0f, 45f);
 
             if (baseSprite != null) sr.sprite = baseSprite;
-            sr.color = new Color(0.08f, 0.08f, 0.08f); // koyu siyah / koyu gri
+            sr.color = new Color(0.08f, 0.08f, 0.08f);
 
             return;
         }
@@ -151,7 +196,8 @@ public class Tile : MonoBehaviour
             markerSr.transform.localRotation = Quaternion.identity;
 
             if (baseSprite != null) sr.sprite = baseSprite;
-            sr.color = ToUnityColor(ColorType);
+            //sr.color = ToUnityColor(ColorType);
+            sr.color = Color.white;
 
             markerSr.color = new Color(0.05f, 0.05f, 0.05f, 0.95f);
 
@@ -160,6 +206,38 @@ public class Tile : MonoBehaviour
         
         markerSr.transform.localScale = new Vector3(0.45f, 0.45f, 1f);
         markerSr.transform.localRotation = Quaternion.Euler(0f, 0f, 45f);
+    } */
+    
+    // special sprites instead of markers
+    public void SetKind(TileKind kind, Sprite specialSprite = null)
+    {
+        Kind = kind;
+
+        if (sr == null) sr = GetComponent<SpriteRenderer>();
+
+        if (kind == TileKind.Normal)
+        {
+            if (baseSprite != null) sr.sprite = baseSprite;
+            sr.color = Color.white;
+
+            if (markerSr != null)
+            {
+                markerSr.enabled = false;
+                markerSr.transform.localScale = Vector3.one;
+                markerSr.transform.localRotation = Quaternion.identity;
+            }
+
+            return;
+        }
+
+        // RocketRow, RocketCol, ColorBomb, Bomb 
+        if (specialSprite != null)
+            sr.sprite = specialSprite;
+
+        sr.color = Color.white;
+
+        if (markerSr != null)
+            markerSr.enabled = false;
     }
 
     public static Color ToUnityColor(TileColor t)
@@ -200,7 +278,7 @@ public class Tile : MonoBehaviour
             SetKind(TileKind.Normal);
     }
     
-    // ice
+    /* ice
     public void SetIce(bool hasIce)
     {
         HasIce = hasIce;
@@ -249,7 +327,14 @@ public class Tile : MonoBehaviour
         lineSr.enabled = false;
 
         iceBorderSrs[index] = lineSr;
+    } */ 
+    public void SetIce(bool hasIce)
+    {
+        HasIce = hasIce;
+
+        if (iceOverlaySr != null)
+            iceOverlaySr.enabled = hasIce;
     }
-    
+   
     
 }

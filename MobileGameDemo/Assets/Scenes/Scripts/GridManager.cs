@@ -29,6 +29,29 @@ public class GridManager : MonoBehaviour
 
     private Tile lastSwapA;
     private Tile lastSwapB;
+    
+    [Header("Tile Sprites")]
+    public Sprite blueFlower;
+    public Sprite pinkFlower;
+    public Sprite redFlower;
+    public Sprite greenFlower;
+    public Sprite orangeFlower;
+    public Sprite purpleFlower;
+    
+    [Header("Special Tile Sprites - Rocket Row ( Red, Green, Blue, Yellow (Pink), Purple, Orange)")]
+    public Sprite[] rocketRowSprites = new Sprite[6];
+
+    [Header("Special Tile Sprites - Rocket Col (Red, Green, Blue, Yellow (Pink), Purple, Orange)")]
+    public Sprite[] rocketColSprites = new Sprite[6];
+
+    [Header("Special Tile Sprites - Bomb (Red, Green, Blue, Yellow (Pink), Purple, Orange)")]
+    public Sprite[] bombSprites = new Sprite[6];
+
+    [Header("Special Tile Sprites - Color Bomb")]
+    public Sprite colorBombSprite;
+    
+    [Header("Ice Sprite")]
+    public Sprite iceOverlaySprite;
 
     private struct MatchLine
     {
@@ -74,7 +97,10 @@ public class GridManager : MonoBehaviour
         SpawnTestColorBomb(new Vector2Int(width / 2, height / 2));
         
         // TEST: spawn a bomb at start for debugging
-        grid[7, 4].SetKind(TileKind.Bomb);
+        //grid[7, 4].SetKind(TileKind.Bomb);
+        // TEST: spawn a bomb at start for debugging
+        Tile testBombTile = grid[7, 4];
+        testBombTile.SetKind(TileKind.Bomb, GetSpecialSprite(TileKind.Bomb, testBombTile.ColorType));
     }
 
     public Vector3 GridToWorld(int x, int y)
@@ -96,7 +122,12 @@ public class GridManager : MonoBehaviour
         go.transform.position = GridToWorld(x, y);
 
         var tile = go.AddComponent<Tile>();
-        tile.Init(new Vector2Int(x, y), color, whiteSprite, tileSize);
+        //changed for adding sprite :  tile.Init(new Vector2Int(x, y), color, whiteSprite, tileSize);  
+        tile.Init(new Vector2Int(x, y), color, GetSpriteForColor(color), tileSize);
+        
+        //icee
+        tile.SetupIceOverlay(iceOverlaySprite);
+        
         tile.SetEmpty(false);
 
         grid[x, y] = tile;
@@ -311,9 +342,15 @@ public class GridManager : MonoBehaviour
             }
         }
 
-        if (specialTile != null && !specialTile.IsEmpty)
+        /*if (specialTile != null && !specialTile.IsEmpty)
         {
             specialTile.SetKind(specialKind);
+            toClear.Remove(specialTile);
+        } */
+        if (specialTile != null && !specialTile.IsEmpty)
+        {
+            Sprite specialSprite = GetSpecialSprite(specialKind, specialTile.ColorType);
+            specialTile.SetKind(specialKind, specialSprite);
             toClear.Remove(specialTile);
         }
 
@@ -565,7 +602,11 @@ public class GridManager : MonoBehaviour
                     Vector3 spawnPos = GridToWorld(x, height + 2);
                     t.transform.position = spawnPos;
 
-                    t.SetColor(RandomColor());
+                    //t.SetColor(RandomColor());
+                    TileColor newColor = RandomColor();
+                    t.SetColor(newColor);
+                    t.SetSprite(GetSpriteForColor(newColor));
+                    
                     t.SetKind(TileKind.Normal);
                     t.SetEmpty(false);
 
@@ -588,7 +629,11 @@ public class GridManager : MonoBehaviour
 
             foreach (var t in matches)
             {
-                t.SetColor(RandomColor());
+                //t.SetColor(RandomColor());
+                TileColor newColor = RandomColor();
+                t.SetColor(newColor);
+                t.SetSprite(GetSpriteForColor(newColor));
+                
                 t.SetKind(TileKind.Normal);
                 t.SetEmpty(false);
             }
@@ -701,8 +746,47 @@ public class GridManager : MonoBehaviour
 
         return squares;
     }
+    
+    private Sprite GetSpriteForColor(TileColor color)
+    {
+        switch (color)
+        {
+            case TileColor.Blue: return blueFlower;
+            case TileColor.Yellow: return pinkFlower; // added pink flower instead of tellow tile 
+            case TileColor.Red: return redFlower;
+            case TileColor.Green: return greenFlower;
+            case TileColor.Orange: return orangeFlower;
+            case TileColor.Purple: return purpleFlower;
+            default: return blueFlower;
+        }
+    }
+    
+    // TileColor enum sırası: Red, Green, Blue, Yellow (Pink inst of Yellow), Purple, Orange
+    private Sprite GetSpecialSprite(TileKind kind, TileColor color)
+    {
+        int index = (int)color;
 
+        switch (kind)
+        {
+            case TileKind.RocketRow:
+                return GetFromArray(rocketRowSprites, index);
+            case TileKind.RocketCol:
+                return GetFromArray(rocketColSprites, index);
+            case TileKind.Bomb:
+                return GetFromArray(bombSprites, index);
+            case TileKind.ColorBomb:
+                return colorBombSprite;
+            default:
+                return null;
+        }
+    }
 
+    private Sprite GetFromArray(Sprite[] arr, int index)
+    {
+        if (arr == null || index < 0 || index >= arr.Length) return null;
+        return arr[index];
+    }
+    
     private TileColor RandomColor()
     {
         int n = System.Enum.GetValues(typeof(TileColor)).Length;
@@ -725,7 +809,9 @@ public class GridManager : MonoBehaviour
         Tile t = grid[pos.x, pos.y];
         if (t == null) return;
         
-        t.SetKind(TileKind.ColorBomb);
+        //t.SetKind(TileKind.ColorBomb);
+        t.SetKind(TileKind.ColorBomb, colorBombSprite);
+        
         t.SetEmpty(false);
     }
     
@@ -772,7 +858,11 @@ public class GridManager : MonoBehaviour
                 // Clear ice from the previous level
                 t.SetIce(false);
                 
-                t.SetColor(RandomColor());
+                //t.SetColor(RandomColor());
+                TileColor newColor = RandomColor();
+                t.SetColor(newColor);
+                t.SetSprite(GetSpriteForColor(newColor));
+                
                 t.SetEmpty(false);
             }
         }
