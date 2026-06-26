@@ -19,5 +19,7 @@ Players must complete all level objectives within a limited number of moves. Obj
 - Displayed as a light border around a tile.
 
 ## Gameplay Preview Video 
-https://youtu.be/jGSbQ3bcbJs
+**Version 22.06.26 :** https://youtu.be/jGSbQ3bcbJs
+
+**Latest Version 26.06.26 :** https://youtu.be/f7zYNsqoXpY
 
