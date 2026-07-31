@@ -6,17 +6,17 @@ Players must complete all level objectives within a limited number of moves. Obj
 
 ### Gameplay Features
 #### Rockets : Matching four tiles creates a Rocket that clears an entire row or column.
-- Horizontal Rockets are displayed with a horizontal line marker.
-- Vertical Rockets are displayed with a vertical line marker.
+- Horizontal Rockets are displayed as colorful horizontal double arrows.
+- Vertical Rockets are displayed as colorful vertical double arrows.
   
 #### Color Bomb : Matching five tiles creates a Color Bomb that clears all tiles of a selected color.
-- Displayed as a white diamond symbol on a black tile.
+- Displayed as a colorful flower with petals of different colors.
   
 #### Bomb : Matching tiles in a 2x2 square creates a Bomb that clears a 3x3 area when activated.
-- Displayed as a dark square symbol on a colored tile.
+- Displayed as a special flower with curved petals in one of the six classic flower colors.
   
 #### Ice : Ice locks tiles in place until broken by clearing nearby matches.
-- Displayed as a light border around a tile.
+- Displayed as a colorful flower bud.
 
 ## Gameplay Preview Video 
 **Version 22.06.26 :** https://youtu.be/jGSbQ3bcbJs
