@@ -264,6 +264,38 @@ public class Tile : MonoBehaviour
         outlineSr.enabled = false;
     }
 
+    // pop anim for match clear 
+    public IEnumerator PlayPopAnimation(float duration = 0.2f)
+    {
+        Vector3 originalScale = transform.localScale;
+        float elapsed = 0f;
+
+        while (elapsed < duration)
+        {
+            elapsed += Time.deltaTime;
+            float t = Mathf.Clamp01(elapsed / duration);
+
+            float scaleMultiplier;
+
+            if (t < 0.4f)
+            {
+                scaleMultiplier = Mathf.Lerp(1f, 1.15f, t / 0.4f);
+            }
+            else
+            {
+                scaleMultiplier = Mathf.Lerp(1.15f, 0f, (t - 0.4f) / 0.6f);
+            }
+
+            transform.localScale = originalScale * scaleMultiplier;
+
+            yield return null;
+        }
+
+    
+        transform.localScale = originalScale;
+    }
+
+
     public void SetEmpty(bool empty)
     {
         IsEmpty = empty;

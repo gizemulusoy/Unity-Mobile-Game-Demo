@@ -53,6 +53,9 @@ public class GridManager : MonoBehaviour
     [Header("Ice Sprite")]
     public Sprite iceOverlaySprite;
 
+    [Header("Match Effects")]
+    [SerializeField] private GameObject matchSparklePrefab;
+
     private struct MatchLine
     {
         public List<Tile> tiles;
@@ -354,13 +357,41 @@ public class GridManager : MonoBehaviour
             toClear.Remove(specialTile);
         }
 
-        foreach (var t in toClear)
-            StartCoroutine(t.FlashWhite(flashDuration));
+            /* foreach (var t in toClear)
+                 StartCoroutine(t.FlashWhite(flashDuration));
 
-        yield return new WaitForSeconds(flashDuration + afterFlashDelay);
+             yield return new WaitForSeconds(flashDuration + afterFlashDelay); */
 
-        // for Level System : Count how many tiles of each color will be cleared in this cascade
-        Dictionary<TileColor, int> counts = new Dictionary<TileColor, int>();
+            // pop + sparkle anim for match clear
+            float popDuration = 0.2f;
+
+            foreach (var t in toClear)
+            {
+                if (t != null && !t.IsEmpty)
+                {
+                    // Play pop animation
+                    StartCoroutine(t.PlayPopAnimation(popDuration));
+
+                    // Create sparkle effect at the tile's position
+                    if (matchSparklePrefab != null)
+                    {
+                        GameObject sparkle = Instantiate(
+                            matchSparklePrefab,
+                            t.transform.position,
+                            Quaternion.identity
+                        );
+
+                        Destroy(sparkle, 1.2f);
+                    }
+                }
+            }
+
+            yield return new WaitForSeconds(popDuration);
+
+
+
+            // for Level System : Count how many tiles of each color will be cleared in this cascade
+            Dictionary<TileColor, int> counts = new Dictionary<TileColor, int>();
         foreach (var t in toClear)
         {
             if (t == null || t.IsEmpty) continue;
