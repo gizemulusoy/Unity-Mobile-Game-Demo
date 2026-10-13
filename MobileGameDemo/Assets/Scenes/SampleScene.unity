@@ -671,7 +671,7 @@ MonoBehaviour:
   - {fileID: 1834465617, guid: 604e3319e2596c149b2ddaf7c20de862, type: 3}
   - {fileID: 1875286475, guid: 604e3319e2596c149b2ddaf7c20de862, type: 3}
   bombSprites:
-  - {fileID: 21300000, guid: 636b136a057695a46b8db459af414729, type: 3}
+  - {fileID: 21300000, guid: d52d64df6b0b1534686f82255ef328c7, type: 3}
   - {fileID: 21300000, guid: b7aee62b718d63b4fbd39db3d3fbf81b, type: 3}
   - {fileID: 21300000, guid: d52d64df6b0b1534686f82255ef328c7, type: 3}
   - {fileID: 21300000, guid: 1079b8699120d5344b70f3f585353441, type: 3}
@@ -680,6 +680,7 @@ MonoBehaviour:
   colorBombSprite: {fileID: 21300000, guid: ac57948083b3c8b4ea7783ba94316797, type: 3}
   iceOverlaySprite: {fileID: 21300000, guid: 2cb49499a00d58d4bb0768aea2c41f8d, type: 3}
   matchSparklePrefab: {fileID: 1878031044854668357, guid: 2d31e0f83526975418308530843f4a95, type: 3}
+  bloomFlashPrefab: {fileID: 1878031044854668357, guid: 87d3561d8f40ff94587b06ad088591d7, type: 3}
 --- !u!1 &121567697
 GameObject:
   m_ObjectHideFlags: 0

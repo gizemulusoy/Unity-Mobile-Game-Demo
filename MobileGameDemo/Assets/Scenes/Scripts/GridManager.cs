@@ -55,6 +55,7 @@ public class GridManager : MonoBehaviour
 
     [Header("Match Effects")]
     [SerializeField] private GameObject matchSparklePrefab;
+    [SerializeField] private GameObject bloomFlashPrefab; // ice
 
     private struct MatchLine
     {
@@ -461,10 +462,34 @@ public class GridManager : MonoBehaviour
                 toClear.Add(t);
         }
 
-        foreach (var t in toClear)
+        /* foreach (var t in toClear)
             StartCoroutine(t.FlashWhite(flashDuration));
 
-        yield return new WaitForSeconds(flashDuration + afterFlashDelay);
+        yield return new WaitForSeconds(flashDuration + afterFlashDelay); */
+
+        // pop + sparkle animation 
+        float popDuration = 0.2f;
+
+        foreach (var t in toClear)
+        {
+            if (t != null && !t.IsEmpty)
+            {
+                StartCoroutine(t.PlayPopAnimation(popDuration));
+
+                if (matchSparklePrefab != null)
+                {
+                    GameObject sparkle = Instantiate(
+                        matchSparklePrefab,
+                        t.transform.position,
+                        Quaternion.identity
+                    );
+
+                    Destroy(sparkle, 1.2f);
+                }
+            }
+        }
+
+        yield return new WaitForSeconds(popDuration);
 
         // solved : colorbomb goal count bug
         Dictionary<TileColor, int> counts = new Dictionary<TileColor, int>();
@@ -927,11 +952,31 @@ public class GridManager : MonoBehaviour
 
                 Tile neighbor = grid[neighborPos.x, neighborPos.y];
 
+                /* if (neighbor != null && neighbor.HasIce)
+                 {
+                     neighbor.SetIce(false);
+                     brokenIceCount++;
+                 }*/ // deleted, added flash affect
+
                 if (neighbor != null && neighbor.HasIce)
                 {
                     neighbor.SetIce(false);
+
+                    // Light flash when the flower bud opens
+                    if (bloomFlashPrefab != null)
+                    {
+                        GameObject flash = Instantiate(
+                            bloomFlashPrefab,
+                            neighbor.transform.position,
+                            Quaternion.identity
+                        );
+
+                        Destroy(flash, 1f);
+                    }
+
                     brokenIceCount++;
                 }
+
             }
         }
 
