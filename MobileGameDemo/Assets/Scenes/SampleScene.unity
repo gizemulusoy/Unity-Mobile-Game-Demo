@@ -657,12 +657,12 @@ MonoBehaviour:
   orangeFlower: {fileID: 333170100, guid: 893f4856240aa71469bd1a8fe0aca515, type: 3}
   purpleFlower: {fileID: -1551863210, guid: 893f4856240aa71469bd1a8fe0aca515, type: 3}
   rocketRowSprites:
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
+  - {fileID: 105151989, guid: e676bf23f0ecd8a429e7ceec0974aa53, type: 3}
+  - {fileID: -229506522, guid: e676bf23f0ecd8a429e7ceec0974aa53, type: 3}
+  - {fileID: 482664889, guid: e676bf23f0ecd8a429e7ceec0974aa53, type: 3}
+  - {fileID: 1005390848, guid: e676bf23f0ecd8a429e7ceec0974aa53, type: 3}
+  - {fileID: -1519392303, guid: e676bf23f0ecd8a429e7ceec0974aa53, type: 3}
+  - {fileID: 401127104, guid: e676bf23f0ecd8a429e7ceec0974aa53, type: 3}
   rocketColSprites:
   - {fileID: 606975035, guid: 604e3319e2596c149b2ddaf7c20de862, type: 3}
   - {fileID: -605166337, guid: 604e3319e2596c149b2ddaf7c20de862, type: 3}
@@ -681,6 +681,7 @@ MonoBehaviour:
   iceOverlaySprite: {fileID: 21300000, guid: 2cb49499a00d58d4bb0768aea2c41f8d, type: 3}
   matchSparklePrefab: {fileID: 1878031044854668357, guid: 2d31e0f83526975418308530843f4a95, type: 3}
   bloomFlashPrefab: {fileID: 1878031044854668357, guid: 87d3561d8f40ff94587b06ad088591d7, type: 3}
+  rocketTrailPrefab: {fileID: 5205820607641773095, guid: c2ffdd68a79195c41984699995e1c9c8, type: 3}
 --- !u!1 &121567697
 GameObject:
   m_ObjectHideFlags: 0

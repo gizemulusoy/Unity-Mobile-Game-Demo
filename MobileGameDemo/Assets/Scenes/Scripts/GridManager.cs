@@ -56,6 +56,7 @@ public class GridManager : MonoBehaviour
     [Header("Match Effects")]
     [SerializeField] private GameObject matchSparklePrefab;
     [SerializeField] private GameObject bloomFlashPrefab; // ice
+    [SerializeField] private GameObject rocketTrailPrefab;
 
     private struct MatchLine
     {
@@ -105,6 +106,23 @@ public class GridManager : MonoBehaviour
         // TEST: spawn a bomb at start for debugging
         Tile testBombTile = grid[7, 4];
         testBombTile.SetKind(TileKind.Bomb, GetSpecialSprite(TileKind.Bomb, testBombTile.ColorType));
+
+        // TEST: spawn Rockets
+        Tile testRocket = grid[6, 6];
+
+        testRocket.SetKind(
+            TileKind.RocketRow,
+            GetSpecialSprite(TileKind.RocketRow, testRocket.ColorType)
+        );
+
+
+        Tile testRocket2 = grid[7, 3];
+
+        testRocket2.SetKind(
+            TileKind.RocketCol,
+            GetSpecialSprite(TileKind.RocketCol, testRocket2.ColorType)
+        );
+
     }
 
     public Vector3 GridToWorld(int x, int y)
@@ -209,9 +227,59 @@ public class GridManager : MonoBehaviour
         lastSwapA = null;
         lastSwapB = null;
     }
-    
+
+
+    private IEnumerator PlayRocketTrail(Tile rocket)
+    {
+        if (rocketTrailPrefab == null || rocket == null)
+            yield break;
+
+        bool horizontal = rocket.Kind == TileKind.RocketRow;
+
+        Vector3 center = rocket.transform.position;
+
+        Vector3 direction = horizontal ? Vector3.right : Vector3.up;
+
+        // Find the two ends of the row or column
+        Vector3 negativeEnd = horizontal
+            ? grid[0, rocket.GridPos.y].transform.position
+            : grid[rocket.GridPos.x, 0].transform.position;
+
+        Vector3 positiveEnd = horizontal
+            ? grid[width - 1, rocket.GridPos.y].transform.position
+            : grid[rocket.GridPos.x, height - 1].transform.position;
+
+        GameObject trailA = Instantiate(rocketTrailPrefab, center, Quaternion.identity);
+        GameObject trailB = Instantiate(rocketTrailPrefab, center, Quaternion.identity);
+
+        // Rotate the sprite for vertical rockets
+        if (!horizontal)
+        {
+            trailA.transform.rotation = Quaternion.Euler(0, 0, 90);
+            trailB.transform.rotation = Quaternion.Euler(0, 0, 90);
+        }
+
+        float duration = 0.25f;
+        float elapsed = 0f;
+
+        while (elapsed < duration)
+        {
+            elapsed += Time.deltaTime;
+            float t = Mathf.Clamp01(elapsed / duration);
+
+            trailA.transform.position = Vector3.Lerp(center, negativeEnd, t);
+            trailB.transform.position = Vector3.Lerp(center, positiveEnd, t);
+
+            yield return null;
+        }
+
+        Destroy(trailA);
+        Destroy(trailB);
+    }
+
+
     // Cascade Loop
-     public IEnumerator RemoveMatchesAndRefill()
+    public IEnumerator RemoveMatchesAndRefill()
 {
     if (matchFinder == null)
         yield break;
@@ -362,6 +430,21 @@ public class GridManager : MonoBehaviour
                  StartCoroutine(t.FlashWhite(flashDuration));
 
              yield return new WaitForSeconds(flashDuration + afterFlashDelay); */
+
+
+            // trail anim for rocket
+            foreach (var t in matched)
+            {
+                if (t == specialTile)
+                    continue;
+
+                if (t.Kind == TileKind.RocketRow ||
+                    t.Kind == TileKind.RocketCol)
+                {
+                    yield return StartCoroutine(PlayRocketTrail(t));
+                }
+            }
+
 
             // pop + sparkle anim for match clear
             float popDuration = 0.2f;
@@ -924,6 +1007,8 @@ public class GridManager : MonoBehaviour
         }
 
         RemoveInitialMatches();
+
+
     }
     
     private void BreakIceAroundClearedTiles(HashSet<Tile> clearedTiles)
