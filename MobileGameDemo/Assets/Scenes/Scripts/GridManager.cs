@@ -27,6 +27,8 @@ public class GridManager : MonoBehaviour
     private Tile[,] grid;
     private Sprite whiteSprite;
 
+    public bool IsBusy { get; private set; }
+
     private Tile lastSwapA;
     private Tile lastSwapB;
     
@@ -180,52 +182,207 @@ public class GridManager : MonoBehaviour
         if (t == null) return;
         t.transform.localScale = Vector3.one * (on ? tileSize * 1.08f : tileSize);
     }
-    
+
+    private bool HasHintMatchAt(TileColor?[,] colors, int x, int y) // match checking for hint system
+    {
+        TileColor? color = colors[x, y];
+
+        if (!color.HasValue)
+            return false;
+
+        int horizontal = 1;
+
+        for (int i = x - 1; i >= 0 && colors[i, y] == color; i--)
+            horizontal++;
+
+        for (int i = x + 1; i < width && colors[i, y] == color; i++)
+            horizontal++;
+
+        if (horizontal >= 3)
+            return true;
+
+        int vertical = 1;
+
+        for (int j = y - 1; j >= 0 && colors[x, j] == color; j--)
+            vertical++;
+
+        for (int j = y + 1; j < height && colors[x, j] == color; j++)
+            vertical++;
+
+        if (vertical >= 3)
+            return true;
+
+        for (int left = x - 1; left <= x; left++)
+        {
+            for (int bottom = y - 1; bottom <= y; bottom++)
+            {
+                if (left < 0 || bottom < 0 ||
+                    left + 1 >= width || bottom + 1 >= height)
+                    continue;
+
+                if (colors[left, bottom] == color &&
+                    colors[left + 1, bottom] == color &&
+                    colors[left, bottom + 1] == color &&
+                    colors[left + 1, bottom + 1] == color)
+                {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+    public bool TryFindHintSwap(out Tile first, out Tile second)
+    {
+        first = null;
+        second = null;
+
+        if (IsBusy || moves <= 0)
+            return false;
+
+        //copying
+        TileColor?[,] colors = new TileColor?[width, height];
+
+        for (int x = 0; x < width; x++)
+        {
+            for (int y = 0; y < height; y++)
+            {
+                Tile tile = grid[x, y];
+
+                if (tile != null && !tile.IsEmpty && !tile.HasIce)
+                    colors[x, y] = tile.ColorType;
+            }
+        }
+
+        Vector2Int[] directions =
+        {
+        Vector2Int.right,
+        Vector2Int.up
+    };
+
+        for (int x = 0; x < width; x++)
+        {
+            for (int y = 0; y < height; y++)
+            {
+                if (!colors[x, y].HasValue)
+                    continue;
+
+                foreach (Vector2Int direction in directions)
+                {
+                    int nextX = x + direction.x;
+                    int nextY = y + direction.y;
+
+                    if (nextX >= width || nextY >= height)
+                        continue;
+
+                    if (!colors[nextX, nextY].HasValue)
+                        continue;
+
+                    Tile a = grid[x, y];
+                    Tile b = grid[nextX, nextY];
+
+                    if (a.Kind == TileKind.ColorBomb ||
+                        b.Kind == TileKind.ColorBomb)
+                    {
+                        first = a;
+                        second = b;
+                        return true;
+                    }
+
+                    if (colors[x, y] == colors[nextX, nextY])
+                        continue;
+
+                    TileColor? savedColor = colors[x, y];
+                    colors[x, y] = colors[nextX, nextY];
+                    colors[nextX, nextY] = savedColor;
+
+                    bool createsMatch =
+                        HasHintMatchAt(colors, x, y) ||
+                        HasHintMatchAt(colors, nextX, nextY);
+
+                    colors[nextX, nextY] = colors[x, y];
+                    colors[x, y] = savedColor;
+
+                    if (createsMatch)
+                    {
+                        first = a;
+                        second = b;
+                        return true;
+                    }
+                }
+            }
+        }
+
+        return false;
+    }
+
     // Input Flow
     public IEnumerator TrySwap(Tile a, Tile b)
     {
+        if (IsBusy) yield break;
         if (a == null || b == null) yield break;
         if (moves <= 0) yield break;
 
-        lastSwapA = a;
-        lastSwapB = b;
+        IsBusy = true;
 
-        // Swap Animation
-        yield return StartCoroutine(SwapTilesAnimated(a, b, swapDuration));
-
-        if ((a.Kind == TileKind.ColorBomb && !b.IsEmpty) || (b.Kind == TileKind.ColorBomb && !a.IsEmpty))
+        try
         {
-            ConsumeMove();
+            lastSwapA = a;
+            lastSwapB = b;
 
-            if (a.Kind == TileKind.ColorBomb && b.Kind == TileKind.ColorBomb)
+            yield return StartCoroutine(
+                SwapTilesAnimated(a, b, swapDuration)
+            );
+
+            if ((a.Kind == TileKind.ColorBomb && !b.IsEmpty) ||
+                (b.Kind == TileKind.ColorBomb && !a.IsEmpty))
             {
-                yield return StartCoroutine(ResolveColorBombSwap(null));
-            }
-            else
-            {
-                TileColor target = (a.Kind == TileKind.ColorBomb) ? b.ColorType : a.ColorType;
-                yield return StartCoroutine(ResolveColorBombSwap(target));
+                ConsumeMove();
+
+                if (a.Kind == TileKind.ColorBomb &&
+                    b.Kind == TileKind.ColorBomb)
+                {
+                    yield return StartCoroutine(
+                        ResolveColorBombSwap(null)
+                    );
+                }
+                else
+                {
+                    TileColor target = a.Kind == TileKind.ColorBomb
+                        ? b.ColorType
+                        : a.ColorType;
+
+                    yield return StartCoroutine(
+                        ResolveColorBombSwap(target)
+                    );
+                }
+
+                yield break;
             }
 
+            var lines = FindMatchLines();
+
+            if (lines.Count > 0)
+            {
+                ConsumeMove();
+
+                yield return StartCoroutine(
+                    RemoveMatchesAndRefill()
+                );
+
+                yield break;
+            }
+
+            yield return StartCoroutine(
+                SwapTilesAnimated(a, b, swapDuration)
+            );
+        }
+        finally
+        {
             lastSwapA = null;
             lastSwapB = null;
-            yield break;
+            IsBusy = false;
         }
-
-        var lines = FindMatchLines();
-        if (lines.Count > 0)
-        {
-            ConsumeMove();
-            
-            yield return StartCoroutine(RemoveMatchesAndRefill());
-            yield break;
-        }
-
-        
-        yield return StartCoroutine(SwapTilesAnimated(a, b, swapDuration));
-
-        lastSwapA = null;
-        lastSwapB = null;
     }
 
 

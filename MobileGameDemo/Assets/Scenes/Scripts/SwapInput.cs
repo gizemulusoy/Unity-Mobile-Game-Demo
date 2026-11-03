@@ -9,6 +9,10 @@ public class SwapInput : MonoBehaviour
 
     void Update()
     {
+
+        if (gridManager.IsBusy)
+            return;
+
         // block gameplay input 
         if (IsPointerOverUI())
             return;

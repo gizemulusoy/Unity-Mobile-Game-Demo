@@ -21,6 +21,8 @@ public class Tile : MonoBehaviour
     private SpriteRenderer sr;
     private SpriteRenderer outlineSr;
 
+    private LineRenderer hintOutline;
+
     public bool IsEmpty { get; private set; }
 
     public TileKind Kind { get; private set; } = TileKind.Normal;
@@ -309,7 +311,7 @@ public class Tile : MonoBehaviour
         if (empty)
             SetKind(TileKind.Normal);
     }
-    
+
     /* ice
     public void SetIce(bool hasIce)
     {
@@ -359,7 +361,86 @@ public class Tile : MonoBehaviour
         lineSr.enabled = false;
 
         iceBorderSrs[index] = lineSr;
-    } */ 
+    } */
+
+    public void SetHintVisible(bool visible)
+    {
+        if (hintOutline == null)
+        {
+            if (!visible)
+                return;
+
+            GameObject outlineObject = new GameObject("HintOutline");
+            outlineObject.transform.SetParent(transform, false);
+
+            hintOutline = outlineObject.AddComponent<LineRenderer>();
+            hintOutline.useWorldSpace = false;
+            hintOutline.loop = true;
+            hintOutline.positionCount = 28;
+            hintOutline.widthMultiplier = 0.09f;
+            hintOutline.numCornerVertices = 5;
+            hintOutline.sharedMaterial = sr.sharedMaterial;
+            hintOutline.sortingLayerID = sr.sortingLayerID;
+            hintOutline.sortingOrder = sr.sortingOrder + 3;
+
+            Color lightColor = new Color(1f, 0.95f, 0.45f, 1f);
+            hintOutline.startColor = lightColor;
+            hintOutline.endColor = lightColor;
+        }
+
+        if (visible)
+        {
+            Bounds bounds = sr.sprite.bounds;
+            float padding = -0.03f;
+
+            float left = bounds.min.x - padding;
+            float right = bounds.max.x + padding;
+            float bottom = bounds.min.y - padding;
+            float top = bounds.max.y + padding;
+
+            hintOutline.SetPosition(0, new Vector3(left, bottom, 0f));
+            hintOutline.SetPosition(1, new Vector3(left, top, 0f));
+            hintOutline.SetPosition(2, new Vector3(right, top, 0f));
+            hintOutline.SetPosition(3, new Vector3(right, bottom, 0f));
+
+            float radius = Mathf.Min(
+                0.12f,
+                (right - left) * 0.25f,
+                (top - bottom) * 0.25f
+            );
+
+            Vector3[] centers =
+            {
+                new Vector3(right - radius, top - radius, 0f),
+                new Vector3(left + radius, top - radius, 0f),
+                new Vector3(left + radius, bottom + radius, 0f),
+                new Vector3(right - radius, bottom + radius, 0f)
+            };
+
+            int index = 0;
+
+            for (int corner = 0; corner < 4; corner++)
+            {
+                for (int step = 0; step <= 6; step++)
+                {
+                    float angle = (corner * 90f + step * 15f) * Mathf.Deg2Rad;
+
+                    Vector3 offset = new Vector3(
+                        Mathf.Cos(angle),
+                        Mathf.Sin(angle),
+                        0f
+                    ) * radius;
+
+                    hintOutline.SetPosition(index, centers[corner] + offset);
+                    index++;
+                }
+            }
+
+        }
+
+        hintOutline.enabled = visible;
+    }
+
     public void SetIce(bool hasIce)
     {
         HasIce = hasIce;
