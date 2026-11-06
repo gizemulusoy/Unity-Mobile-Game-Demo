@@ -98,6 +98,9 @@ public class LevelManager : MonoBehaviour
 
         if (losePanel != null)
             losePanel.SetActive(false);
+
+        if (grid != null)
+            grid.RequestBoardCheck();
     }
 
     

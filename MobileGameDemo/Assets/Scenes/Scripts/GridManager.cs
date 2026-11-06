@@ -24,6 +24,7 @@ public class GridManager : MonoBehaviour
     public float afterFlashDelay = 0.15f;
 
     private int moves;
+    private bool boardCheckPending;
     private Tile[,] grid;
     private Sprite whiteSprite;
 
@@ -232,12 +233,245 @@ public class GridManager : MonoBehaviour
 
         return false;
     }
-    public bool TryFindHintSwap(out Tile first, out Tile second)
+
+    public void RequestBoardCheck()
+    {
+        boardCheckPending = true;
+    }
+
+    private void LateUpdate()
+    {
+        if (!boardCheckPending || IsBusy)
+            return;
+
+        LevelManager levelManager = FindFirstObjectByType<LevelManager>(FindObjectsInactive.Include);
+
+        if (levelManager == null || levelManager.CurrentLevel == null)
+            return;
+
+        if (moves <= 0 || levelManager.AllGoalsDone())
+        {
+            boardCheckPending = false;
+            return;
+        }
+
+        GameObject[] panels =
+        {
+        levelManager.levelStartPanel,
+        levelManager.winPanel,
+        levelManager.losePanel,
+        levelManager.levelsPanel,
+        levelManager.settingsPanel
+    };
+
+        foreach(GameObject panel in panels)
+        {
+            if (panel != null && panel.activeInHierarchy)
+            {
+                return;
+            }
+        }
+
+        for (int x = 0; x < width; x++)
+        {
+            for (int y = 0; y < height; y++)
+            {
+                if (grid[x, y] == null || grid[x, y].IsEmpty)
+                    return;
+            }
+        }
+
+        boardCheckPending = false;
+
+        if (!TryFindHintSwap(out _, out _))
+        {
+            StartCoroutine(ShuffleBoard());
+        }
+    }
+
+    // these two methods (below) collect eligible positions and shuffle the tiles in a separate list
+    // GetShufflePositions()
+    //CreateShuffledTiles(List<Vector2Int> positions)
+    private List<Vector2Int> GetShufflePositions()
+    {
+        List<Vector2Int> positions = new List<Vector2Int>();
+
+        for (int x = 0; x < width; x++)
+        {
+            for (int y = 0; y < height; y++)
+            {
+                Tile tile = grid[x, y];
+
+                if (tile == null || tile.IsEmpty || tile.HasIce)
+                    continue;
+
+                positions.Add(new Vector2Int(x, y));
+            }
+        }
+
+        return positions;
+    }
+
+    private List<Tile> CreateShuffledTiles(List<Vector2Int> positions)
+    {
+        List<Tile> tiles = new List<Tile>();
+
+        foreach (Vector2Int position in positions)
+        {
+            tiles.Add(grid[position.x, position.y]);
+        }
+
+        for (int i = tiles.Count - 1; i > 0; i--)
+        {
+            int randomIndex = Random.Range(0, i + 1);
+
+            Tile savedTile = tiles[i];
+            tiles[i] = tiles[randomIndex];
+            tiles[randomIndex] = savedTile;
+        }
+
+        return tiles;
+    }
+
+    private void ApplyShuffleLayout(
+    List<Vector2Int> positions,
+    List<Tile> tiles)
+    {
+        for (int i = 0; i < positions.Count; i++)
+        {
+            Vector2Int position = positions[i];
+            Tile tile = tiles[i];
+
+            grid[position.x, position.y] = tile;
+            tile.SetGridPos(position);
+        }
+    }
+
+    private bool TryPrepareShuffle(List<Vector2Int> positions)
+    {
+        if (positions.Count < 2 || moves <= 0)
+            return false;
+
+        List<Tile> originalTiles = new List<Tile>();
+
+        foreach (Vector2Int position in positions)
+        {
+            originalTiles.Add(grid[position.x, position.y]);
+        }
+
+        for (int attempt = 0; attempt < 200; attempt++)
+        {
+            List<Tile> shuffledTiles = CreateShuffledTiles(positions);
+
+            ApplyShuffleLayout(positions, shuffledTiles);
+
+            if (FindMatchLines().Count > 0)
+                continue;
+
+            if (TryFindHintSwap(out _, out _, true))
+                return true;
+        }
+
+        ApplyShuffleLayout(positions, originalTiles);
+        return false;
+    }
+
+    /* 
+    [ContextMenu("Test Shuffle")]
+    private void TestShuffle()
+    {
+        if (!Application.isPlaying || IsBusy || moves <= 0)
+            return;
+
+        StartCoroutine(ShuffleBoard());
+    }
+    [ContextMenu("Test No Moves Board")]
+    private void TestNoMovesBoard()
+    {
+        if (!Application.isPlaying || IsBusy || moves <= 0)
+            return;
+
+        for (int x = 0; x < width; x++)
+        {
+            for (int y = 0; y < height; y++)
+            {
+                Tile tile = grid[x, y];
+
+                if (tile == null || tile.IsEmpty || tile.HasIce)
+                    continue;
+
+                TileColor color = (TileColor)((x + 2 * y) % 6);
+
+                tile.SetKind(TileKind.Normal);
+                tile.SetColor(color);
+                tile.SetSprite(GetSpriteForColor(color));
+            }
+        }
+
+        RequestBoardCheck();
+    } 
+    */
+
+    private IEnumerator ShuffleBoard()
+    {
+        if (IsBusy || moves <= 0)
+            yield break;
+
+        IsBusy = true;
+
+        try
+        {
+            yield return null;
+
+            List<Vector2Int> positions = GetShufflePositions();
+
+            if (!TryPrepareShuffle(positions))
+            {
+                foreach (Vector2Int position in positions)
+                {
+                    Tile tile = grid[position.x, position.y];
+                    tile.transform.position =
+                        GridToWorld(position.x, position.y);
+                }
+
+                Debug.LogWarning("No playable shuffle layout was found.");
+                yield break;
+            }
+
+            float duration = 0.6f; //0.35f;
+
+            foreach (Vector2Int position in positions)
+            {
+                Tile tile = grid[position.x, position.y];
+
+                tile.SetHintVisible(false);
+
+                Vector3 target = GridToWorld(position.x, position.y);
+
+                StartCoroutine(MoveTo(tile, target, duration));
+            }
+
+            yield return new WaitForSeconds(duration);
+
+            foreach (Vector2Int position in positions)
+            {
+                grid[position.x, position.y].transform.position =
+                    GridToWorld(position.x, position.y);
+            }
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+
+    public bool TryFindHintSwap(out Tile first, out Tile second, bool ignoreBusy = false)
     {
         first = null;
         second = null;
 
-        if (IsBusy || moves <= 0)
+        if ((!ignoreBusy && IsBusy) || moves <= 0)
             return false;
 
         //copying
@@ -316,8 +550,37 @@ public class GridManager : MonoBehaviour
         return false;
     }
 
-    // Input Flow
+
+
     public IEnumerator TrySwap(Tile a, Tile b)
+    {
+        if (IsBusy || moves <= 0)
+            yield break;
+
+        if (a == null || b == null)
+            yield break;
+
+        yield return StartCoroutine(ResolveSwap(a, b));
+
+        if (IsBusy || moves <= 0)
+            yield break;
+
+        LevelManager levelManager = FindFirstObjectByType<LevelManager>(FindObjectsInactive.Include);
+
+        if (levelManager != null && levelManager.AllGoalsDone())
+            yield break;
+
+        if (FindMatchLines().Count > 0)
+            yield break;
+
+        if (!TryFindHintSwap(out _, out _))
+        {
+            yield return StartCoroutine(ShuffleBoard());
+        }
+    }
+
+
+    private IEnumerator ResolveSwap(Tile a, Tile b)
     {
         if (IsBusy) yield break;
         if (a == null || b == null) yield break;
@@ -1123,7 +1386,7 @@ public class GridManager : MonoBehaviour
         moves--;
         if (movesUI != null) movesUI.SetMoves(moves);
         
-        var levelManager = FindFirstObjectByType<LevelManager>();
+        var levelManager = FindFirstObjectByType<LevelManager>(FindObjectsInactive.Include);
         if (levelManager != null)
             levelManager.OnMoveConsumed(moves);
 
