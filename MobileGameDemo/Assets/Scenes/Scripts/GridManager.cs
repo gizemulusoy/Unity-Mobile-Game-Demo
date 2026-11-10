@@ -1319,7 +1319,52 @@ public class GridManager : MonoBehaviour
             default: return blueFlower;
         }
     }
-    
+
+    public bool TryPlaceBooster(Tile tile, BoosterType type)
+    {
+        if (IsBusy || moves <= 0 || tile == null)
+            return false;
+
+        if (tile.IsEmpty || tile.HasIce || tile.Kind != TileKind.Normal)
+            return false;
+
+        if (GetTile(tile.GridPos) != tile)
+            return false;
+
+        TileKind kind;
+
+        switch (type)
+        {
+            case BoosterType.RocketRow:
+                kind = TileKind.RocketRow;
+                break;
+
+            case BoosterType.RocketCol:
+                kind = TileKind.RocketCol;
+                break;
+
+            case BoosterType.Bomb:
+                kind = TileKind.Bomb;
+                break;
+
+            case BoosterType.ColorBomb:
+                kind = TileKind.ColorBomb;
+                break;
+
+            default:
+                return false;
+        }
+
+        Sprite sprite = GetSpecialSprite(kind, tile.ColorType);
+
+        if (sprite == null)
+            return false;
+
+        tile.SetKind(kind, sprite);
+
+        return true;
+    }
+
     // TileColor enum sırası: Red, Green, Blue, Yellow (Pink inst of Yellow), Purple, Orange
     private Sprite GetSpecialSprite(TileKind kind, TileColor color)
     {

@@ -5,6 +5,7 @@ using UnityEngine.EventSystems;
 public class SwapInput : MonoBehaviour
 {
     public GridManager gridManager;
+    public BoosterManager boosterManager;
     private Tile selected;
 
     void Update()
@@ -57,6 +58,19 @@ public class SwapInput : MonoBehaviour
 
     void HandleClick(Tile clicked)
     {
+
+        if (boosterManager != null && boosterManager.IsSelecting)
+        {
+            if (selected != null)
+            {
+                gridManager.Highlight(selected, false);
+                selected = null;
+            }
+
+            boosterManager.TryUseOnTile(clicked);
+            return;
+        }
+
         if (selected == null)
         {
             selected = clicked;
