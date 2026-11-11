@@ -14,7 +14,9 @@ public class LevelManager : MonoBehaviour
     public GameObject levelStartPanel;
     public GameObject winPanel;
     public GameObject losePanel;
-    
+
+    [SerializeField] private WinStars winStars;
+
     public GameObject levelsPanel;
     public GameObject settingsPanel;
 
@@ -45,15 +47,11 @@ public class LevelManager : MonoBehaviour
         // Grid setup
         if (grid != null)
         {
+            grid.ResetBoardForNewLevel();
             grid.SetMovesFromLevel(MovesLeft);
-
-            // reset board only after Level 1
-            // because l1 contains temporary debug elements
-            if (CurrentLevelIndex > 0)
-                grid.ResetBoardForNewLevel();
-            
         }
-        
+
+
         // spawn ice blocks defined in the level asset
         if (grid != null)
         {
@@ -65,7 +63,15 @@ public class LevelManager : MonoBehaviour
                     tile.SetIce(true);
             }
         }
-        
+
+        if (grid != null && CurrentLevel.startingTiles != null)
+        {
+            foreach (StartingTile startingTile in CurrentLevel.startingTiles)
+            {
+                grid.ApplyStartingTile(startingTile);
+            }
+        }
+
         RuntimeGoals = new LevelGoal[CurrentLevel.goals.Length];
 
         for (int i = 0; i < RuntimeGoals.Length; i++)
@@ -103,26 +109,46 @@ public class LevelManager : MonoBehaviour
             grid.RequestBoardCheck();
     }
 
-    
+    private int CalculateStars()
+    {
+        float remainingRatio =
+            (float)MovesLeft / Mathf.Max(1, CurrentLevel.moveLimit);
+
+        if (remainingRatio >= 0.5f)
+            return 3;
+
+        if (remainingRatio >= 0.25f)
+            return 2;
+
+        return 1;
+    }
+    private void TryCompleteLevel()
+    {
+        if (isTransitioning || !AllGoalsDone())
+            return;
+
+        isTransitioning = true;
+
+        int stars = CalculateStars();
+
+        if (winStars != null)
+            winStars.ShowStars(stars);
+
+        UnlockNextLevel();
+
+        Debug.Log($"Level {CurrentLevelIndex + 1} won with {stars} star(s).");
+
+        if (winPanel != null)
+            winPanel.SetActive(true);
+    }
+
+
     private void HandleColorCleared(TileColor color, int count)
     {
         DecreaseColorGoal(color, count);
 
-        if (!isTransitioning && AllGoalsDone())
-        {
-            isTransitioning = true;
-            
-            UnlockNextLevel(); // for levels menu
+        TryCompleteLevel();
 
-            Debug.Log("WIN!");
-
-            if (winPanel != null)
-                winPanel.SetActive(true);
-            
-            
-            
-        }
-        
         if (!AllGoalsDone() && MovesLeft <= 0)
         {
             Debug.Log("LOSE!");
@@ -137,17 +163,7 @@ public class LevelManager : MonoBehaviour
     {
         DecreaseIceGoal(count);
 
-        if (!isTransitioning && AllGoalsDone())
-        {
-            isTransitioning = true;
-            
-            UnlockNextLevel(); // for levels menu
-
-            Debug.Log("WIN!");
-
-            if (winPanel != null)
-                winPanel.SetActive(true);
-        }
+        TryCompleteLevel();
     }
     
 
@@ -279,10 +295,6 @@ public class LevelManager : MonoBehaviour
         Debug.Log("Restarting current level: " + (CurrentLevelIndex + 1));
 
         isTransitioning = false;
-
-        // Fresh board
-        if (grid != null)
-            grid.ResetBoardForNewLevel();
 
         StartLevel(CurrentLevelIndex);
     }

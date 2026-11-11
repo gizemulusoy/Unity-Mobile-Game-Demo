@@ -79,14 +79,20 @@ public class GridManager : MonoBehaviour
     public System.Action<TileColor, int> onColorCleared;
     // for Ice Breakinhg
     public System.Action<int> onIceBroken;
-    
+
     private void Awake()
     {
         grid = new Tile[width, height];
         whiteSprite = CreateWhiteSprite();
+
+        if (matchFinder == null)
+            matchFinder = FindFirstObjectByType<MatchFinder>();
+
+        GenerateGrid();
+        RemoveInitialMatches();
     }
 
-    private void Start()
+    /* private void Start()
     {
         if (matchFinder == null)
             matchFinder = FindFirstObjectByType<MatchFinder>();
@@ -94,9 +100,9 @@ public class GridManager : MonoBehaviour
         GenerateGrid();
         
         // TEST: remporary ice tiles
-        /* grid[3, 3].SetIce(true);
+        grid[3, 3].SetIce(true);
         grid[4, 4].SetIce(true);
-        grid[5, 5].SetIce(true); */
+        grid[5, 5].SetIce(true); 
         
         if (matchFinder != null)
             RemoveInitialMatches();
@@ -126,7 +132,7 @@ public class GridManager : MonoBehaviour
             GetSpecialSprite(TileKind.RocketCol, testRocket2.ColorType)
         );
 
-    }
+    }   */
 
     public Vector3 GridToWorld(int x, int y)
     {
@@ -1318,6 +1324,35 @@ public class GridManager : MonoBehaviour
             case TileColor.Purple: return purpleFlower;
             default: return blueFlower;
         }
+    }
+
+    public void ApplyStartingTile(StartingTile startingTile)
+    {
+        Vector2Int position = new Vector2Int(startingTile.x, startingTile.y);
+        Tile tile = GetTile(position);
+
+        if (tile == null)
+        {
+            Debug.LogWarning($"No tile at starting position {position}.");
+            return;
+        }
+
+        Sprite specialSprite = null;
+
+        if (startingTile.kind != TileKind.Normal)
+        {
+            specialSprite = GetSpecialSprite(startingTile.kind, startingTile.color);
+
+            if (specialSprite == null)
+            {
+                Debug.LogWarning($"Missing sprite for {startingTile.kind} at {position}.");
+                return;
+            }
+        }
+
+        tile.SetColor(startingTile.color);
+        tile.SetSprite(GetSpriteForColor(startingTile.color));
+        tile.SetKind(startingTile.kind, specialSprite);
     }
 
     public bool TryPlaceBooster(Tile tile, BoosterType type)

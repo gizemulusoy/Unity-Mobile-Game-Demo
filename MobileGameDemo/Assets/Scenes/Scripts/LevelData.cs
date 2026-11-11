@@ -17,6 +17,15 @@ public struct IcePosition
     public int y;
 }
 
+[System.Serializable]
+public struct StartingTile
+{
+    public int x;
+    public int y;
+    public TileColor color;
+    public TileKind kind;
+}
+
 [CreateAssetMenu(menuName = "Match3/Level Data", fileName = "Level_")]
 public class LevelData : ScriptableObject
 {
@@ -25,4 +34,7 @@ public class LevelData : ScriptableObject
 
     [Header("Ice")]
     public IcePosition[] icePositions;
+
+    [Header("Starting Board")]
+    public StartingTile[] startingTiles = new StartingTile[0];
 }

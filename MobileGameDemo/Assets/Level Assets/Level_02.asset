@@ -12,21 +12,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 436221a387f8e334689c11da82aaba20, type: 3}
   m_Name: Level_02
   m_EditorClassIdentifier: 
-  moveLimit: 15
+  moveLimit: 13
   goals:
   - type: 0
     color: 2
-    amount: 5
+    amount: 9
   - type: 0
-    color: 2
-    amount: 5
-  - type: 1
-    color: 2
-    amount: 2
-  icePositions:
-  - x: 5
-    y: 5
-  - x: 6
-    y: 5
-  - x: 7
-    y: 5
+    color: 1
+    amount: 9
+  icePositions: []
+  startingTiles: []
