@@ -8,8 +8,12 @@ public class SwapInput : MonoBehaviour
     public BoosterManager boosterManager;
     private Tile selected;
 
+    [SerializeField] private GameObject winPanel;
+
     void Update()
     {
+        if (winPanel != null && winPanel.activeInHierarchy)
+            return;
 
         if (gridManager.IsBusy)
             return;

@@ -568,12 +568,16 @@ public class GridManager : MonoBehaviour
 
         yield return StartCoroutine(ResolveSwap(a, b));
 
-        if (IsBusy || moves <= 0)
+        if (IsBusy)
             yield break;
 
-        LevelManager levelManager = FindFirstObjectByType<LevelManager>(FindObjectsInactive.Include);
+        LevelManager levelManager =
+            FindFirstObjectByType<LevelManager>(FindObjectsInactive.Include);
 
-        if (levelManager != null && levelManager.AllGoalsDone())
+        if (levelManager != null)
+            levelManager.CheckLevelResult();
+
+        if (moves <= 0 || (levelManager != null && levelManager.AllGoalsDone()))
             yield break;
 
         if (FindMatchLines().Count > 0)

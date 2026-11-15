@@ -17,6 +17,8 @@ public class LevelManager : MonoBehaviour
 
     [SerializeField] private WinStars winStars;
 
+    [SerializeField] private WinBlurCapture winBlurCapture;
+
     public GameObject levelsPanel;
     public GameObject settingsPanel;
 
@@ -122,6 +124,23 @@ public class LevelManager : MonoBehaviour
 
         return 1;
     }
+
+    private void AwardLevelCoins(int stars)
+    {
+        string rewardKey = $"LevelCoinsAwarded_{CurrentLevelIndex}";
+        int reward = 50 + (stars - 1) * 25;
+        int alreadyAwarded = PlayerPrefs.GetInt(rewardKey, 0);
+        int coinsToAdd = reward - alreadyAwarded;
+
+        if (coinsToAdd <= 0)
+            return;
+
+        int balance = PlayerPrefs.GetInt("CoinBalance", 0);
+
+        PlayerPrefs.SetInt("CoinBalance", balance + coinsToAdd);
+        PlayerPrefs.SetInt(rewardKey, reward);
+        PlayerPrefs.Save();
+    }
     private void TryCompleteLevel()
     {
         if (isTransitioning || !AllGoalsDone())
@@ -130,6 +149,7 @@ public class LevelManager : MonoBehaviour
         isTransitioning = true;
 
         int stars = CalculateStars();
+        AwardLevelCoins(stars);
 
         if (winStars != null)
             winStars.ShowStars(stars);
@@ -138,34 +158,46 @@ public class LevelManager : MonoBehaviour
 
         Debug.Log($"Level {CurrentLevelIndex + 1} won with {stars} star(s).");
 
-        if (winPanel != null)
-            winPanel.SetActive(true);
-    }
+        if (winPanel == null)
+            return;
 
+        if (winBlurCapture != null && winBlurCapture.isActiveAndEnabled)
+            winBlurCapture.ShowWinPanel(winPanel);
+        else
+            winPanel.SetActive(true);
+
+    }
 
     private void HandleColorCleared(TileColor color, int count)
     {
         DecreaseColorGoal(color, count);
+    }
 
-        TryCompleteLevel();
+    private void HandleIceBroken(int count)
+    {
+        DecreaseIceGoal(count);
+    }
 
-        if (!AllGoalsDone() && MovesLeft <= 0)
+    public void CheckLevelResult()
+    {
+        if (isTransitioning)
+            return;
+
+        if (AllGoalsDone())
         {
-            Debug.Log("LOSE!");
+            TryCompleteLevel();
+            return;
+        }
+
+        if (MovesLeft <= 0)
+        {
+            isTransitioning = true;
 
             if (losePanel != null)
                 losePanel.SetActive(true);
         }
-        
     }
-    
-    private void HandleIceBroken(int count)
-    {
-        DecreaseIceGoal(count);
 
-        TryCompleteLevel();
-    }
-    
 
     public void NextLevel()
     {
