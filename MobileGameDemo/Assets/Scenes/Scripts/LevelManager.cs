@@ -22,6 +22,8 @@ public class LevelManager : MonoBehaviour
     public GameObject levelsPanel;
     public GameObject settingsPanel;
 
+    public GameObject shopPanel;
+
     // GOAL UI
     public TMP_Text goalText;
 
@@ -359,8 +361,19 @@ public class LevelManager : MonoBehaviour
         if (settingsPanel != null)
             settingsPanel.SetActive(false);
     }
-    
-    
+    public void OnPressOpenShop()
+    {
+        if (shopPanel != null)
+            shopPanel.SetActive(true);
+    }
+
+    public void OnPressCloseShop()
+    {
+        if (shopPanel != null)
+            shopPanel.SetActive(false);
+    }
+
+
     public bool IsLevelUnlocked(int levelIndex)
     {
         int unlockedLevel = PlayerPrefs.GetInt("UnlockedLevel", 0);

@@ -57,6 +57,24 @@ public class BoosterManager : MonoBehaviour
         return true;
     }
 
+    public bool TryPurchase(BoosterType type, int price)
+    {
+        if (price <= 0)
+            return false;
+
+        int balance = PlayerPrefs.GetInt("CoinBalance", 0);
+        int stock = GetStock(type);
+
+        if (balance < price || stock == int.MaxValue)
+            return false;
+
+        PlayerPrefs.SetInt("CoinBalance", balance - price);
+        PlayerPrefs.SetInt(GetStockKey(type), stock + 1);
+        PlayerPrefs.Save();
+
+        return true;
+    }
+
     public void SelectBooster(BoosterType type)
     {
         if (gridManager == null || gridManager.IsBusy)
