@@ -21,5 +21,6 @@ Players must complete all level objectives within a limited number of moves. Obj
 ## Gameplay Preview Video 
 **Version 22.06.26 :** https://youtu.be/jGSbQ3bcbJs
 
-**Latest Version 26.06.26 :** https://youtu.be/f7zYNsqoXpY
+**Version 26.06.26 :** https://youtu.be/f7zYNsqoXpY
 
+**Latest Version 25.11.26 :** https://youtu.be/7ivHVSgxny4?si=X3bPOFGfvl0pxpdY
